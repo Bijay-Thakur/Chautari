@@ -206,10 +206,10 @@ export default function HomePage() {
           </Link>
         </motion.div>
 
-        {/* Path 2 — Break the Chain */}
+        {/* Path 2 — Come sit with yourself */}
         <motion.div custom={1} variants={sectionVariants} initial="hidden" animate="visible">
           <Link
-            href="/screening"
+            href="/come-sit-with-yourself"
             className="group relative block overflow-hidden rounded-[22px] cursor-pointer"
             style={{ minHeight: "clamp(220px, 32vh, 296px)" }}
           >
@@ -252,20 +252,20 @@ export default function HomePage() {
                     lineHeight: 1.1, marginBottom: "0.45rem",
                   }}
                 >
-                  Break the Chain
+                  Come sit with yourself
                 </h2>
                 <p style={{ color: "rgba(215,192,138,0.48)", fontSize: "0.86rem", lineHeight: 1.65, maxWidth: "290px", margin: "0 auto 0.3rem" }}>
-                  You might be passing something to your future ones that you never wanted for yourself.
+                  Speak in your own voice, reflect on what you carry, and explore gentle next steps with care.
                 </p>
                 <p style={{ color: "rgba(196,163,90,0.32)", fontSize: "0.78rem", fontStyle: "italic" }}>
-                  Awareness is the first act of change.
+                  Your words stay with you — we listen without judgment.
                 </p>
               </div>
               <span
                 className="flex items-center gap-2 mt-1 transition-all duration-300 group-hover:gap-3"
                 style={{ color: "#b08a38", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase" }}
               >
-                Begin the journey <ArrowRight />
+                Take a seat <ArrowRight />
               </span>
             </div>
           </Link>

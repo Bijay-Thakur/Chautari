@@ -24,8 +24,9 @@ const notoNepali = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Chautari | Break the Chain",
-  description: "A culturally grounded safe space for Nepali youth. Understand generational trauma — and choose what you pass forward.",
+  title: "Chautari",
+  description:
+    "A culturally grounded safe space. Rest in the Chautari room, or come sit with yourself and explore with care.",
 };
 
 export default function RootLayout({
