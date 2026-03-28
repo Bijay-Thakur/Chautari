@@ -13,7 +13,7 @@ export function middleware(req: NextRequest) {
   const cookie = req.cookies.get(SAATHI_AUTH_COOKIE)?.value;
   const authed = cookie === SAATHI_AUTH_VALUE;
 
-  // Root login page: authenticated users go straight to /home
+  // Landing: authenticated users skip straight to /home
   if (pathname === "/") {
     if (authed) {
       return NextResponse.redirect(new URL("/home", req.url));

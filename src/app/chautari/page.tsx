@@ -101,7 +101,7 @@ export default function ChautariRoom() {
       setRoomId(rid);
 
       /* Clear only this user's previous kites — other users' kites stay */
-      await supabase.from("kites").delete().eq("room_id", rid).eq("user_id", uid);
+      await supabase.from("kites").delete().eq("room_id", rid).eq("user_id", userId);
 
       const seeds = makeSeedKites();
       setKites(seeds);
