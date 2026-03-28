@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { FloatingKite, type KiteData } from "@/components/FloatingKite";
 import { HugOverlay } from "@/components/HugOverlay";
@@ -12,6 +12,7 @@ import { generateKiteMotion, KITE_COLORS } from "@/lib/kitePhysics";
 import { seedKites } from "@/data/seedKites";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { playKiteHushSound } from "@/lib/kiteFlySound";
+
 
 /* ─── Stars (deterministic to avoid hydration mismatch) ───────────────── */
 const STARS = Array.from({ length: 40 }, (_, i) => ({
@@ -341,22 +342,35 @@ export default function ChautariRoom() {
         />
       ))}
 
-      {/* ── Top-left: room label ── */}
+      {/* ── Top-left: room label + tagline ── */}
       <div
         style={{
           position: "absolute",
-          top: 18,
+          top: 14,
           left: 20,
           zIndex: 20,
+        }}
+      >
+        <div style={{
           fontFamily: "Georgia, 'Times New Roman', serif",
           fontStyle: "italic",
           fontSize: 20,
           color: "rgba(255, 210, 150, 0.9)",
           letterSpacing: "0.02em",
           textShadow: "0 1px 3px rgba(0,0,0,0.35)",
-        }}
-      >
-        Chautari
+          lineHeight: 1,
+        }}>
+          Chautari
+        </div>
+        <div style={{
+          fontSize: 10.5,
+          color: "rgba(220, 190, 140, 0.52)",
+          letterSpacing: "0.06em",
+          marginTop: 4,
+          fontFamily: "Inter, system-ui, sans-serif",
+        }}>
+          a resting stone under the open sky
+        </div>
       </div>
 
       {/* ── Top-center: users bar ── */}
@@ -448,6 +462,45 @@ export default function ChautariRoom() {
             />
           );
         })}
+
+        {/* ── Ambient welcome text ── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 1.8 }}
+          style={{
+            position: "absolute",
+            bottom: "14%",
+            left: 0,
+            right: "22%",         // stay clear of the release panel
+            textAlign: "center",
+            pointerEvents: "none",
+            zIndex: 4,
+          }}
+        >
+          <p style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontStyle: "italic",
+            fontSize: "clamp(0.9rem, 1.8vw, 1.1rem)",
+            color: "rgba(235, 205, 155, 0.38)",
+            letterSpacing: "0.03em",
+            lineHeight: 1.7,
+            margin: 0,
+            textShadow: "0 2px 12px rgba(0,0,0,0.5)",
+          }}>
+            Whatever you&apos;re holding — you can let it go here.
+          </p>
+          <p style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: "clamp(0.65rem, 1.2vw, 0.75rem)",
+            color: "rgba(200, 175, 130, 0.28)",
+            letterSpacing: "0.12em",
+            marginTop: 6,
+            textTransform: "uppercase",
+          }}>
+            write it · release it · send warmth to others
+          </p>
+        </motion.div>
 
         {/* Release panel */}
         <ReleasePanel onRelease={handleRelease} isReleasing={isReleasing} />
