@@ -11,14 +11,11 @@ export const MENTAL_HEALTH_BUCKETS: MentalHealthBucket[] = [
   "psychosis",
 ];
 
-/** Short sample clips (replace with your own bucket-specific videos). */
+/** Bucket video clips served from /public/clips/ */
 export const BUCKET_VIDEO_URLS: Record<MentalHealthBucket, string> = {
-  depression:
-    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-  anxiety:
-    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-  psychosis:
-    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+  depression: "/clips/Depression.mp4",
+  anxiety: "/clips/Anxiety.mp4",
+  psychosis: "/clips/Psychosis.mp4",
 };
 
 /** Placeholder “research” destination — swap for your real studies page. */

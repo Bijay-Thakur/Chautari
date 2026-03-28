@@ -1,284 +1,557 @@
 "use client";
 
-import Link from "next/link";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
-function Atmosphere() {
+/* ─── Bird silhouette ────────────────────────────────────────────────── */
+function BirdSVG({ size = 28, opacity = 0.78 }: { size?: number; opacity?: number }) {
   return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-      <div style={{
-        position: "absolute", top: "-25%", left: "15%",
-        width: "75%", height: "80%",
-        background: "radial-gradient(ellipse, rgba(165,88,60,0.17) 0%, transparent 62%)",
-        filter: "blur(90px)",
-      }} />
-      <div style={{
-        position: "absolute", bottom: "-5%", right: "0%",
-        width: "60%", height: "60%",
-        background: "radial-gradient(ellipse, rgba(78,118,100,0.13) 0%, transparent 62%)",
-        filter: "blur(75px)",
-      }} />
-      <div style={{
-        position: "absolute", top: "55%", left: "-18%",
-        width: "50%", height: "55%",
-        background: "radial-gradient(ellipse, rgba(130,100,62,0.09) 0%, transparent 62%)",
-        filter: "blur(70px)",
-      }} />
+    <svg width={size} height={size * 0.48} viewBox="0 0 60 29" fill="none" style={{ opacity }}>
+      <path
+        d="M30 15 Q21 3 6 8 Q15 13 22 17 Q26 13 30 15 Q34 13 38 17 Q45 13 54 8 Q39 3 30 15Z"
+        fill="rgba(22,14,8,0.88)"
+      />
+    </svg>
+  );
+}
+
+/* ─── Bird flock — generous count, layered depths ────────────────────── */
+const BIRDS = [
+  /* near — larger, slower */
+  { y: 9,  dur: 26, delay: 0,  size: 30, amp: 3.8, dir: 1 },
+  { y: 12, dur: 30, delay: 7,  size: 24, amp: 3.0, dir: 1 },
+  { y: 7,  dur: 22, delay: 14, size: 28, amp: 3.4, dir: 1 },
+  /* mid flock */
+  { y: 15, dur: 18, delay: 2,  size: 20, amp: 2.4, dir: 1 },
+  { y: 10, dur: 24, delay: 9,  size: 18, amp: 2.2, dir: 1 },
+  { y: 18, dur: 20, delay: 5,  size: 22, amp: 2.6, dir: 1 },
+  { y: 6,  dur: 28, delay: 18, size: 16, amp: 2.0, dir: 1 },
+  { y: 21, dur: 16, delay: 12, size: 19, amp: 2.1, dir: 1 },
+  /* far — small, faster */
+  { y: 8,  dur: 14, delay: 4,  size: 12, amp: 1.6, dir: 1 },
+  { y: 14, dur: 12, delay: 10, size: 10, amp: 1.4, dir: 1 },
+  { y: 5,  dur: 16, delay: 22, size: 11, amp: 1.5, dir: 1 },
+  { y: 20, dur: 10, delay: 6,  size: 9,  amp: 1.3, dir: 1 },
+  /* scattered singles */
+  { y: 11, dur: 19, delay: 17, size: 14, amp: 1.8, dir: 1 },
+  { y: 16, dur: 23, delay: 3,  size: 13, amp: 1.7, dir: 1 },
+  { y: 3,  dur: 21, delay: 13, size: 15, amp: 1.9, dir: 1 },
+  { y: 22, dur: 15, delay: 20, size: 17, amp: 2.0, dir: 1 },
+  { y: 4,  dur: 27, delay: 8,  size: 21, amp: 2.5, dir: 1 },
+  { y: 19, dur: 11, delay: 25, size: 8,  amp: 1.2, dir: 1 },
+  { y: 13, dur: 13, delay: 1,  size: 16, amp: 1.8, dir: 1 },
+  { y: 8,  dur: 17, delay: 30, size: 12, amp: 1.6, dir: 1 },
+];
+
+function AnimatedBirds() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 4 }}>
+      {BIRDS.map((b, i) => (
+        <motion.div
+          key={i}
+          className="absolute"
+          style={{ top: `${b.y}%`, left: "-6%" }}
+          animate={{
+            x: ["0vw", "112vw"],
+            y: [
+              "0px",
+              `${-b.amp * 9}px`,
+              "0px",
+              `${b.amp * 5}px`,
+              "0px",
+              `${-b.amp * 7}px`,
+              "0px",
+            ],
+          }}
+          transition={{
+            x: { duration: b.dur, delay: b.delay, repeat: Infinity, ease: "linear" },
+            y: {
+              duration: b.dur / 7,
+              delay: b.delay,
+              repeat: Infinity,
+              ease: "easeInOut",
+            },
+          }}
+        >
+          {/* Wing-flap via scaleY on the SVG wrapper */}
+          <motion.div
+            animate={{ scaleY: [1, 0.5, 1, 0.58, 1] }}
+            transition={{
+              duration: 0.48 + (i % 4) * 0.08,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: (i * 0.11) % 0.48,
+            }}
+            style={{ transformOrigin: "center 40%" }}
+          >
+            <BirdSVG size={b.size} opacity={0.55 + (b.size / 30) * 0.35} />
+          </motion.div>
+        </motion.div>
+      ))}
     </div>
   );
 }
 
-function ArrowRight() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M3 8h10M9 5l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+/* ─── Fire — positioned over the actual bonfire in the image ─────────── */
+const FIRE_CX = 32;   // % from left
+const FIRE_CY = 72;   // % from top
 
-function LeafGlyph() {
+type Particle = { id: number; dx: number; dy: number; size: number; dur: number; delay: number; hue: number; drift: number };
+
+function FireParticles() {
+  const count = 28;
+  const particles: Particle[] = Array.from({ length: count }, (_, i) => ({
+    id: i,
+    dx: ((i * 37 + 13) % 16) - 8,     // spread ±8% around center x
+    dy: ((i * 29 + 7) % 6) - 3,       // spread ±3% around center y
+    size: 4 + ((i * 17 + 5) % 12),
+    dur: 1.2 + ((i * 23 + 11) % 16) / 10,
+    delay: ((i * 31 + 3) % 26) / 10,
+    hue: i % 3,
+    drift: ((i * 19 + 7) % 22) - 11,
+  }));
+
+  const hueColors = [
+    "rgba(255, 205, 55, 0.9)",
+    "rgba(255, 115, 25, 0.85)",
+    "rgba(235, 50, 15, 0.75)",
+  ];
+
   return (
-    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden>
-      <circle cx="22" cy="22" r="21" stroke="rgba(141,175,152,0.18)" strokeWidth="1" />
-      <path
-        d="M14 32 Q22 14 30 32"
-        stroke="rgba(141,175,152,0.55)"
-        strokeWidth="1.5"
-        fill="rgba(61,92,74,0.22)"
-        strokeLinejoin="round"
+    <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 5 }}>
+      {/* Outer warm halo */}
+      <motion.div
+        style={{
+          position: "absolute",
+          left: `${FIRE_CX}%`, top: `${FIRE_CY - 4}%`,
+          width: 200, height: 140,
+          borderRadius: "50%",
+          background: "radial-gradient(ellipse, rgba(255,120,25,0.25) 0%, rgba(200,70,10,0.1) 50%, transparent 75%)",
+          filter: "blur(24px)",
+          transform: "translate(-50%, -50%)",
+        }}
+        animate={{ opacity: [0.55, 0.9, 0.6, 0.85, 0.55] }}
+        transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
       />
-      <line x1="22" y1="32" x2="22" y2="36" stroke="rgba(141,175,152,0.35)" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ChainGlyph() {
-  return (
-    <svg width="70" height="24" viewBox="0 0 70 24" fill="none" aria-hidden>
-      <rect x="1" y="1" width="24" height="22" rx="11" stroke="rgba(196,163,90,0.5)" strokeWidth="2.5" />
-      <rect x="45" y="1" width="24" height="22" rx="11" stroke="rgba(196,163,90,0.5)" strokeWidth="2.5" />
-      <rect x="20" y="8" width="30" height="8" rx="4" fill="rgba(154,123,60,0.35)" />
-    </svg>
-  );
-}
-
-const sectionVariants = {
-  hidden: { opacity: 0, y: 28 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.35 + i * 0.15, duration: 0.65, ease: [0.22, 1, 0.36, 1] },
-  }),
-};
-
-export default function HomePage() {
-  return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-x-hidden"
-      style={{ background: "#0a0807" }}
-    >
-      <Atmosphere />
-
-      {/* ── Hero ── */}
-      <motion.section
-        initial={{ opacity: 0, y: 22 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 flex flex-col items-center justify-center text-center px-6"
-        style={{ paddingTop: "clamp(3.5rem, 11vh, 6.5rem)", paddingBottom: "clamp(2rem, 6vh, 4rem)" }}
-      >
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.18, duration: 0.55 }}
-          style={{
-            fontSize: "0.6rem", letterSpacing: "0.4em", textTransform: "uppercase",
-            color: "rgba(196,163,90,0.5)", marginBottom: "1.6rem",
-          }}
-        >
-          A culturally grounded safe space
-        </motion.p>
-
-        <h1
-          className="font-display"
-          style={{
-            fontSize: "clamp(4.2rem, 15vw, 8.5rem)",
-            lineHeight: 0.9,
-            letterSpacing: "-0.045em",
-            color: "#efe4d0",
-            textShadow: "0 8px 90px rgba(0,0,0,0.55)",
-          }}
-        >
-          Chautari
-        </h1>
-
+      {/* Core glow */}
+      <motion.div
+        style={{
+          position: "absolute",
+          left: `${FIRE_CX}%`, top: `${FIRE_CY}%`,
+          width: 90, height: 60,
+          borderRadius: "50%",
+          background: "radial-gradient(ellipse, rgba(255,170,35,0.55) 0%, rgba(255,80,10,0.22) 55%, transparent 80%)",
+          filter: "blur(10px)",
+          transform: "translate(-50%, -50%)",
+        }}
+        animate={{ opacity: [0.75, 1, 0.78, 0.96, 0.75], scaleX: [1, 1.1, 0.93, 1.06, 1], scaleY: [1, 0.9, 1.08, 0.93, 1] }}
+        transition={{ duration: 1.7, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {/* Flame particles */}
+      {particles.map((p) => (
         <motion.div
-          initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ delay: 0.45, duration: 0.55, ease: "easeOut" }}
+          key={p.id}
           style={{
-            width: 44, height: 1,
-            background: "linear-gradient(90deg, transparent, rgba(196,163,90,0.55), transparent)",
-            margin: "1.75rem auto",
+            position: "absolute",
+            left: `calc(${FIRE_CX + p.dx * 0.4}% )`,
+            top: `${FIRE_CY + p.dy}%`,
+            width: p.size,
+            height: p.size * 1.7,
+            borderRadius: "50% 50% 28% 28%",
+            background: hueColors[p.hue],
+            filter: "blur(1.8px)",
           }}
+          animate={{
+            y: [0, -(28 + p.size * 3.2)],
+            x: [0, p.drift * 0.6, p.drift * 1.2],
+            opacity: [0, 0.92, 0.55, 0],
+            scale: [0.35, 1, 0.55, 0.08],
+          }}
+          transition={{ duration: p.dur, delay: p.delay, repeat: Infinity, ease: [0.4, 0, 0.6, 1] }}
         />
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.55, duration: 0.55 }}
+      ))}
+      {/* Ember sparks */}
+      {Array.from({ length: 12 }, (_, i) => (
+        <motion.div
+          key={`spark-${i}`}
           style={{
-            fontSize: "clamp(0.875rem, 2vw, 1rem)",
-            color: "rgba(212,196,176,0.42)",
-            maxWidth: "24rem",
-            lineHeight: 1.75,
+            position: "absolute",
+            left: `calc(${FIRE_CX + ((i * 37 % 14) - 7) * 0.3}%)`,
+            top: `${FIRE_CY - 1}%`,
+            width: 2.5, height: 2.5,
+            borderRadius: "50%",
+            background: "rgba(255, 225, 110, 0.98)",
           }}
+          animate={{
+            y: [0, -(55 + i * 9)],
+            x: [0, (i % 2 === 0 ? 1 : -1) * (8 + i * 4)],
+            opacity: [0, 1, 0.7, 0],
+            scale: [1, 1, 0.4, 0],
+          }}
+          transition={{ duration: 2.4 + i * 0.16, delay: i * 0.28, repeat: Infinity, ease: "easeOut" }}
+        />
+      ))}
+      {/* Smoke wisps from fire */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={`smoke-${i}`}
+          style={{
+            position: "absolute",
+            left: `${FIRE_CX + (i - 1) * 2}%`,
+            top: `${FIRE_CY - 4}%`,
+            width: 32 + i * 10,
+            height: 50 + i * 15,
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse, rgba(190,180,170,0.11) 0%, transparent 70%)",
+            filter: "blur(7px)",
+            transformOrigin: "bottom center",
+          }}
+          animate={{
+            y: [0, -(70 + i * 28)],
+            x: [0, (i % 2 === 0 ? 16 : -12) + i * 4],
+            opacity: [0, 0.4, 0.22, 0],
+            scale: [0.4, 1, 1.5, 2.2],
+          }}
+          transition={{ duration: 5 + i * 1.4, repeat: Infinity, ease: "easeOut", delay: i * 1.7 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─── Lantern / light pulses ─────────────────────────────────────────── */
+const LIGHTS = [
+  { x: 12, y: 42, r: 65, color: "rgba(255,185,60,0.28)" },
+  { x: 20, y: 35, r: 48, color: "rgba(255,210,90,0.22)" },
+  { x: 72, y: 40, r: 58, color: "rgba(255,190,70,0.24)" },
+  { x: 85, y: 44, r: 42, color: "rgba(255,175,50,0.2)" },
+  { x: 55, y: 37, r: 52, color: "rgba(255,200,80,0.18)" },
+  { x: 30, y: 50, r: 35, color: "rgba(255,160,40,0.2)" },
+  { x: 92, y: 35, r: 38, color: "rgba(255,195,75,0.18)" },
+  { x: 8,  y: 55, r: 32, color: "rgba(255,170,55,0.22)" },
+];
+
+function LightPulses() {
+  return (
+    <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 3 }}>
+      {LIGHTS.map((l, i) => (
+        <motion.div
+          key={i}
+          style={{
+            position: "absolute",
+            left: `${l.x}%`, top: `${l.y}%`,
+            width: l.r * 2, height: l.r * 2,
+            transform: "translate(-50%, -50%)",
+            borderRadius: "50%",
+            background: `radial-gradient(ellipse, ${l.color} 0%, transparent 70%)`,
+            filter: "blur(18px)",
+          }}
+          animate={{ opacity: [0.3, 0.88, 0.42, 0.95, 0.3], scale: [0.88, 1.12, 0.93, 1.08, 0.88] }}
+          transition={{ duration: 3.2 + i * 0.75, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─── CTA Button with breathing ring + floating glow ─────────────────── */
+function EnterButton({ onClick }: { onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      {/* Pulsing ring 1 — slow breath */}
+      <motion.span
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: -8,
+          borderRadius: 999,
+          border: "1.5px solid rgba(220, 180, 90, 0.45)",
+          pointerEvents: "none",
+        }}
+        animate={{ scale: [1, 1.14, 1], opacity: [0.7, 0.15, 0.7] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {/* Pulsing ring 2 — offset phase */}
+      <motion.span
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: -18,
+          borderRadius: 999,
+          border: "1px solid rgba(220, 175, 70, 0.25)",
+          pointerEvents: "none",
+        }}
+        animate={{ scale: [1, 1.18, 1], opacity: [0.4, 0, 0.4] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+      />
+      {/* Warm glow behind button */}
+      <motion.span
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: -20,
+          borderRadius: 999,
+          background: "radial-gradient(ellipse, rgba(200,155,55,0.32) 0%, transparent 70%)",
+          filter: "blur(14px)",
+          pointerEvents: "none",
+        }}
+        animate={{ opacity: hovered ? [0.6, 1, 0.6] : [0.3, 0.65, 0.3] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <motion.button
+        onClick={onClick}
+        onHoverStart={() => setHovered(true)}
+        onHoverEnd={() => setHovered(false)}
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.35, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+        whileHover={{ scale: 1.055, y: -3, transition: { type: "spring", stiffness: 380, damping: 22 } }}
+        whileTap={{ scale: 0.96 }}
+        style={{
+          position: "relative",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 11,
+          padding: "15px 42px",
+          borderRadius: 999,
+          background: hovered
+            ? "linear-gradient(135deg, rgba(215,172,88,0.96) 0%, rgba(175,128,52,0.94) 100%)"
+            : "linear-gradient(135deg, rgba(196,155,72,0.9) 0%, rgba(158,115,42,0.88) 100%)",
+          border: "1px solid rgba(255, 232, 172, 0.6)",
+          color: "rgba(18, 10, 2, 0.96)",
+          fontFamily: "'Georgia', 'Times New Roman', serif",
+          fontSize: "1.02rem",
+          fontWeight: 600,
+          letterSpacing: "0.07em",
+          cursor: "pointer",
+          boxShadow: hovered
+            ? "0 10px 50px rgba(180,130,35,0.5), 0 2px 10px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.5)"
+            : "0 6px 32px rgba(160,115,28,0.38), 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.42)",
+          transition: "background 0.3s ease, box-shadow 0.3s ease",
+          overflow: "hidden",
+        }}
+      >
+        <span style={{ position: "relative", zIndex: 1 }}>Enter Chautari</span>
+        {/* Arrow with gentle right-nudge on hover */}
+        <motion.span
+          style={{ position: "relative", zIndex: 1, display: "flex" }}
+          animate={hovered ? { x: [0, 5, 0] } : { x: 0 }}
+          transition={{ duration: 0.8, repeat: hovered ? Infinity : 0, ease: "easeInOut" }}
         >
-          Understand what you carry.{" "}
-          <span style={{ display: "inline-block" }}>Choose what you pass forward.</span>
-        </motion.p>
-      </motion.section>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </motion.span>
 
-      {/* ── Two vertical paths ── */}
-      <div
-        className="relative z-10 flex flex-col w-full max-w-lg mx-auto px-5 gap-4"
-        style={{ paddingBottom: "clamp(5.5rem, 14vh, 8rem)" }}
-      >
-        {/* Path 1 — A Place to Rest */}
-        <motion.div custom={0} variants={sectionVariants} initial="hidden" animate="visible">
-          <Link
-            href="/chautari"
-            className="group relative block overflow-hidden rounded-[22px] cursor-pointer"
-            style={{ minHeight: "clamp(196px, 28vh, 268px)" }}
+        {/* Travelling shimmer */}
+        <motion.span
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.28) 50%, transparent 75%)",
+            borderRadius: 999,
+          }}
+          animate={{ x: ["-120%", "160%"] }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.2 }}
+        />
+      </motion.button>
+    </div>
+  );
+}
+
+/* ─── Main Page ──────────────────────────────────────────────────────── */
+export default function LandingPage() {
+  const router = useRouter();
+  const [entered, setEntered] = useState(false);
+
+  function handleEnter() {
+    setEntered(true);
+    setTimeout(() => router.push("/home"), 700);
+  }
+
+  return (
+    <div style={{ position: "relative", width: "100vw", height: "100dvh", overflow: "hidden", background: "#110c07" }}>
+
+      {/* ── z:1  Background image — cover fills the whole screen ── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.6, ease: "easeOut" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          backgroundImage: "url(/images/Background.jpeg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+
+      {/* ── z:2  Top + bottom cinematic fade ── */}
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 2,
+        background: "linear-gradient(180deg, rgba(4,2,1,0.35) 0%, transparent 16%, transparent 65%, rgba(4,2,1,0.48) 100%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* ── z:2  Right-side gradient vignette — darkens only the text area ── */}
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 2,
+        background: "linear-gradient(90deg, transparent 45%, rgba(6,3,1,0.52) 68%, rgba(8,4,1,0.68) 100%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* ── Animation layers ── */}
+      <AnimatedBirds />
+      <LightPulses />
+      <FireParticles />
+
+      {/* ── Content — right side, no card, text floats directly over image ── */}
+      <AnimatePresence>
+        {!entered && (
+          <motion.div
+            key="content"
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              position: "absolute", inset: 0, zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              padding: "0 clamp(2.5rem, 6vw, 6rem) 0 0",
+            }}
           >
-            <div
-              className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-              style={{ background: "linear-gradient(148deg, #0d2119 0%, #122e22 55%, #0b1d16 100%)" }}
-            />
-            <div
-              className="absolute transition-opacity duration-600 opacity-55 group-hover:opacity-90"
+            <motion.div
+              initial={{ opacity: 0, x: 36 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
               style={{
-                top: "-20%", left: "20%", width: "65%", height: "100%",
-                background: "radial-gradient(ellipse, rgba(109,143,122,0.38) 0%, transparent 60%)",
-                filter: "blur(32px)",
-              }}
-            />
-            <div
-              className="absolute opacity-25"
-              style={{
-                bottom: 0, right: 0, width: "40%", height: "50%",
-                background: "radial-gradient(ellipse, rgba(90,160,120,0.25) 0%, transparent 65%)",
-                filter: "blur(20px)",
-              }}
-            />
-            <div
-              className="absolute inset-[1px] rounded-[21px] flex flex-col items-center justify-center text-center gap-3 px-8 py-8"
-              style={{
-                background: "rgba(255,255,255,0.028)",
-                backdropFilter: "blur(18px)",
-                WebkitBackdropFilter: "blur(18px)",
-                border: "1px solid rgba(255,255,255,0.075)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                textAlign: "left",
+                maxWidth: "clamp(260px, 36vw, 420px)",
               }}
             >
-              <LeafGlyph />
-              <div>
-                <h2
-                  className="font-display"
-                  style={{
-                    fontSize: "clamp(1.55rem, 4.5vw, 1.9rem)",
-                    color: "#bcd4c6", letterSpacing: "-0.025em",
-                    lineHeight: 1.1, marginBottom: "0.45rem",
-                  }}
-                >
-                  A Place to Rest
-                </h2>
-                <p style={{ color: "rgba(175,208,190,0.48)", fontSize: "0.86rem", lineHeight: 1.65, maxWidth: "270px", margin: "0 auto" }}>
-                  The resting stone under the pipal tree — where people stop, share, and breathe. Come as you are.
-                </p>
-              </div>
-              <span
-                className="flex items-center gap-2 mt-1 transition-all duration-300 group-hover:gap-3"
-                style={{ color: "#6f9e82", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase" }}
+              {/* Eyebrow */}
+              <motion.p
+                initial={{ opacity: 0, letterSpacing: "0.65em" }}
+                animate={{ opacity: 1, letterSpacing: "0.28em" }}
+                transition={{ delay: 0.5, duration: 1.1 }}
+                style={{
+                  fontSize: "0.58rem",
+                  textTransform: "uppercase",
+                  color: "rgba(255, 232, 188, 0.95)",
+                  marginBottom: "0.9rem",
+                  fontFamily: "'Georgia', serif",
+                  fontStyle: "italic",
+                  textShadow:
+                    "0 0 12px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,1), 0 0 28px rgba(0,0,0,0.9)",
+                }}
               >
-                Enter the room <ArrowRight />
-              </span>
-            </div>
-          </Link>
-        </motion.div>
+                A space to breathe · Nepal
+              </motion.p>
 
-        {/* Path 2 — Come sit with yourself */}
-        <motion.div custom={1} variants={sectionVariants} initial="hidden" animate="visible">
-          <Link
-            href="/come-sit-with-yourself"
-            className="group relative block overflow-hidden rounded-[22px] cursor-pointer"
-            style={{ minHeight: "clamp(220px, 32vh, 296px)" }}
-          >
-            <div
-              className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-              style={{ background: "linear-gradient(148deg, #1a1208 0%, #261c09 55%, #181005 100%)" }}
-            />
-            <div
-              className="absolute transition-opacity duration-600 opacity-50 group-hover:opacity-85"
-              style={{
-                top: "-15%", right: "10%", width: "70%", height: "95%",
-                background: "radial-gradient(ellipse, rgba(196,163,90,0.28) 0%, transparent 60%)",
-                filter: "blur(36px)",
-              }}
-            />
-            <div
-              className="absolute opacity-30"
-              style={{
-                bottom: 0, left: "5%", width: "45%", height: "55%",
-                background: "radial-gradient(ellipse, rgba(180,85,58,0.28) 0%, transparent 62%)",
-                filter: "blur(22px)",
-              }}
-            />
-            <div
-              className="absolute inset-[1px] rounded-[21px] flex flex-col items-center justify-center text-center gap-2.5 px-8 py-8"
-              style={{
-                background: "rgba(255,255,255,0.022)",
-                backdropFilter: "blur(18px)",
-                WebkitBackdropFilter: "blur(18px)",
-                border: "1px solid rgba(255,255,255,0.065)",
-              }}
-            >
-              <ChainGlyph />
-              <div>
-                <h2
-                  className="font-display"
-                  style={{
-                    fontSize: "clamp(1.55rem, 4.5vw, 1.9rem)",
-                    color: "#d6be8c", letterSpacing: "-0.025em",
-                    lineHeight: 1.1, marginBottom: "0.45rem",
-                  }}
-                >
-                  Come sit with yourself
-                </h2>
-                <p style={{ color: "rgba(215,192,138,0.48)", fontSize: "0.86rem", lineHeight: 1.65, maxWidth: "290px", margin: "0 auto 0.3rem" }}>
-                  Speak in your own voice, reflect on what you carry, and explore gentle next steps with care.
-                </p>
-                <p style={{ color: "rgba(196,163,90,0.32)", fontSize: "0.78rem", fontStyle: "italic" }}>
-                  Your words stay with you — we listen without judgment.
-                </p>
-              </div>
-              <span
-                className="flex items-center gap-2 mt-1 transition-all duration-300 group-hover:gap-3"
-                style={{ color: "#b08a38", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase" }}
+              {/* Title */}
+              <motion.h1
+                initial={{ opacity: 0, y: 22 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.62, duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  fontFamily: "'Georgia', 'Times New Roman', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  fontSize: "clamp(3rem, 8vw, 5.5rem)",
+                  lineHeight: 0.95,
+                  letterSpacing: "-0.03em",
+                  color: "#fffdf6",
+                  textShadow:
+                    "0 0 18px rgba(0,0,0,1), 0 2px 8px rgba(0,0,0,1), 0 0 50px rgba(0,0,0,0.9), 0 4px 24px rgba(0,0,0,0.8)",
+                  marginBottom: "1.15rem",
+                }}
               >
-                Take a seat <ArrowRight />
-              </span>
-            </div>
-          </Link>
-        </motion.div>
-      </div>
+                Chautari
+              </motion.h1>
 
-      {/* Privacy note */}
-      <div
-        className="relative z-10 text-center pb-16"
-        style={{ color: "rgba(212,196,176,0.16)", fontSize: "0.65rem", letterSpacing: "0.07em" }}
-      >
-        Your responses are private and never stored.
-      </div>
+              {/* Divider */}
+              <motion.div
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                transition={{ delay: 0.9, duration: 0.55, ease: "easeOut" }}
+                style={{
+                  width: 48, height: 1,
+                  background: "linear-gradient(90deg, rgba(215,180,100,0.9), rgba(215,180,100,0.15))",
+                  marginBottom: "1.15rem",
+                  transformOrigin: "left center",
+                }}
+              />
+
+              {/* Main quote */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.8 }}
+                style={{
+                  fontFamily: "'Georgia', 'Times New Roman', serif",
+                  fontStyle: "italic",
+                  fontSize: "clamp(0.92rem, 2vw, 1.15rem)",
+                  color: "#fffcf4",
+                  lineHeight: 1.78,
+                  marginBottom: "0.55rem",
+                  textShadow:
+                    "0 0 14px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1), 0 0 36px rgba(0,0,0,0.95)",
+                }}
+              >
+                You must be tired carrying all those things in your heart.
+              </motion.p>
+
+              {/* Subline */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.0, duration: 0.75 }}
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontSize: "clamp(0.76rem, 1.5vw, 0.86rem)",
+                  color: "rgba(255, 240, 215, 0.9)",
+                  lineHeight: 1.7,
+                  marginBottom: "2.1rem",
+                  textShadow:
+                    "0 0 12px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,1), 0 0 28px rgba(0,0,0,0.9)",
+                }}
+              >
+                Come, rest a while. You are not alone.
+              </motion.p>
+
+              {/* CTA */}
+              <EnterButton onClick={handleEnter} />
+
+              {/* Disclaimer */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.85, duration: 0.9 }}
+                style={{
+                  marginTop: "1.2rem",
+                  fontSize: "0.57rem",
+                  color: "rgba(255, 225, 185, 0.6)",
+                  letterSpacing: "0.07em",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  textShadow: "0 0 10px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,1)",
+                }}
+              >
+                A culturally grounded mental health companion · Not a crisis service
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
