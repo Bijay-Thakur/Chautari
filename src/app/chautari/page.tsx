@@ -100,24 +100,12 @@ export default function ChautariRoom() {
       const rid = rooms[0].id as string;
       setRoomId(rid);
 
-      const { data: dbKites } = await supabase
-        .from("kites")
-        .select("*")
-        .eq("room_id", rid)
-        .order("created_at", { ascending: false })
-        .limit(30);
+      /* Clear only this user's previous kites — other users' kites stay */
+      await supabase.from("kites").delete().eq("room_id", rid).eq("user_id", uid);
 
-      const fetched = (dbKites ?? []) as KiteData[];
-
-      if (fetched.length < 3) {
-        const seeds = makeSeedKites();
-        const all = [...fetched, ...seeds];
-        setKites(all);
-        assignMotions(all);
-      } else {
-        setKites(fetched);
-        assignMotions(fetched);
-      }
+      const seeds = makeSeedKites();
+      setKites(seeds);
+      assignMotions(seeds);
     }
 
     init();
@@ -144,6 +132,16 @@ export default function ChautariRoom() {
           setNewKiteIds((prev) => new Set([...prev, nk.id]));
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "kites", filter: `room_id=eq.${roomId}` },
+        (payload) => {
+          const deletedId = (payload.old as { id: string }).id;
+          if (!deletedId) return;
+          setKites((prev) => prev.filter((k) => k.id !== deletedId));
+          delete kiteMotions.current[deletedId];
+        }
+      )
       .subscribe();
 
     const hugsChannel = supabase
@@ -168,6 +166,32 @@ export default function ChautariRoom() {
     };
   }, [roomId]);
 
+  /* ── Erase user's own kites when they leave (reliable via beforeunload) ── */
+  useEffect(() => {
+    if (!roomId || !supabaseReady || !userId) return;
+
+    const eraseOwnKites = () => {
+      supabase
+        .from("kites")
+        .delete()
+        .eq("room_id", roomId)
+        .eq("user_id", userId)
+        .then(() => {});
+    };
+
+    /* beforeunload fires on hard navigations / tab close */
+    window.addEventListener("beforeunload", eraseOwnKites);
+
+    return () => {
+      window.removeEventListener("beforeunload", eraseOwnKites);
+      /* Also fires on soft SPA navigation (component unmount) */
+      eraseOwnKites();
+      /* Clear session so re-joining feels like a fresh start */
+      sessionStorage.removeItem("chautari_uid");
+      sessionStorage.removeItem("chautari_uname");
+    };
+  }, [roomId, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ── Helpers ── */
   function makeSeedKites(): KiteData[] {
     return seedKites.map((sk, i) => ({
@@ -184,7 +208,9 @@ export default function ChautariRoom() {
 
   async function handleHug(kiteId: string) {
     const kite = kites.find((k) => k.id === kiteId);
-    if (!kite || kite.user_id === userId) return;
+    if (!kite) return;
+    /* Block hugging your own (non-seed) kites */
+    if (!kite.isSeed && kite.user_id === userId) return;
 
     /* Optimistic hug count bump */
     setKites((prev) =>
@@ -380,7 +406,7 @@ export default function ChautariRoom() {
 
       {/* ── Top-right: back ── */}
       <Link
-        href="/"
+        href="/home"
         style={{
           position: "absolute",
           top: 18,
@@ -402,7 +428,7 @@ export default function ChautariRoom() {
           top: 0,
           left: 0,
           right: 0,
-          bottom: 48,
+          bottom: 58,
         }}
       >
         {/* Kites */}
@@ -423,17 +449,6 @@ export default function ChautariRoom() {
 
         {/* Release panel */}
         <ReleasePanel onRelease={handleRelease} isReleasing={isReleasing} />
-
-        {/* Hug overlay */}
-        {hugOverlay.kite && (
-          <HugOverlay
-            visible={hugOverlay.visible}
-            kiteMessage={hugOverlay.kite.message}
-            kiteOwnerName={hugOverlay.kite.anonymous_name}
-            onConnect={handleConnect}
-            onDismiss={() => setHugOverlay({ visible: false, kite: null })}
-          />
-        )}
 
         {/* Anonymous chat */}
         <AnimatePresence>
@@ -478,6 +493,17 @@ export default function ChautariRoom() {
         </div>
       </div>
 
+      {/* ── Hug overlay — fixed so it always covers the full viewport ── */}
+      {hugOverlay.kite && (
+        <HugOverlay
+          visible={hugOverlay.visible}
+          kiteMessage={hugOverlay.kite.message}
+          kiteOwnerName={hugOverlay.kite.anonymous_name}
+          onConnect={handleConnect}
+          onDismiss={() => setHugOverlay({ visible: false, kite: null })}
+        />
+      )}
+
       {/* ── Crisis bar ── */}
       <div
         style={{
@@ -485,33 +511,217 @@ export default function ChautariRoom() {
           bottom: 0,
           left: 0,
           right: 0,
-          height: 48,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 24px",
-          background: "rgba(7,9,15,0.92)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
           zIndex: 100,
+          overflow: "hidden",
         }}
       >
-        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.26)" }}>
-          Need support right now?
-        </span>
-        <a
-          href="tel:16600102005"
+        {/* Radiant top border — fades left and right */}
+        <div
           style={{
-            fontSize: 12,
-            color: "rgba(245,166,35,0.75)",
-            textDecoration: "none",
-            fontWeight: 500,
-            letterSpacing: "0.01em",
+            height: 1,
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(196,163,90,0.6) 25%, rgba(220,100,80,0.5) 55%, rgba(196,163,90,0.6) 75%, transparent 100%)",
+          }}
+        />
+
+        <div
+          style={{
+            height: 57,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 24px",
+            background:
+              "linear-gradient(to right, rgba(16,9,4,0.99) 0%, rgba(9,10,18,0.98) 60%, rgba(12,9,5,0.99) 100%)",
+            backdropFilter: "blur(28px)",
+            WebkitBackdropFilter: "blur(28px)",
+            boxShadow: "0 -16px 48px rgba(0,0,0,0.55)",
+            gap: 16,
+            position: "relative",
           }}
         >
-          TPO Nepal — 1660-0102005
-        </a>
+          {/* Warm ambient bleed behind the left content */}
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: "40%",
+              background:
+                "radial-gradient(ellipse at 0% 50%, rgba(185,70,55,0.08), transparent 70%)",
+              pointerEvents: "none",
+            }}
+          />
+
+          {/* Left: heart icon + layered text */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, position: "relative" }}>
+            {/* Pulsing heart circle */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <div
+                style={{
+                  position: "absolute",
+                  inset: -4,
+                  borderRadius: "50%",
+                  background: "rgba(185,70,55,0.12)",
+                  animation: "crisis-ring 2.8s ease-in-out infinite",
+                }}
+              />
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  background:
+                    "linear-gradient(135deg, rgba(185,70,55,0.22), rgba(140,45,35,0.15))",
+                  border: "1px solid rgba(210,90,70,0.35)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  color: "rgba(230,100,82,0.95)",
+                  boxShadow:
+                    "0 0 10px rgba(185,70,55,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+                  animation: "crisis-heartbeat 2.8s ease-in-out infinite",
+                  position: "relative",
+                }}
+              >
+                ♥
+              </div>
+            </div>
+
+            <div>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 13,
+                  color: "rgba(248,236,218,0.88)",
+                  fontWeight: 500,
+                  letterSpacing: "0.005em",
+                  lineHeight: 1.2,
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontStyle: "italic",
+                }}
+              >
+                Need support right now?
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 9,
+                  color: "rgba(196,163,90,0.52)",
+                  letterSpacing: "0.1em",
+                  marginTop: 3.5,
+                  textTransform: "uppercase",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                }}
+              >
+                You are not alone · Someone will listen
+              </span>
+            </div>
+          </div>
+
+          {/* Right: layered call button */}
+          <a
+            href="tel:16600102005"
+            className="crisis-call-btn"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 9,
+              padding: "8px 18px 8px 14px",
+              background:
+                "linear-gradient(135deg, rgba(196,163,90,0.13) 0%, rgba(160,128,60,0.08) 100%)",
+              border: "1px solid rgba(196,163,90,0.3)",
+              borderRadius: 999,
+              textDecoration: "none",
+              flexShrink: 0,
+              boxShadow:
+                "0 2px 16px rgba(196,163,90,0.1), inset 0 1px 0 rgba(255,245,200,0.06)",
+              transition: "all 0.25s ease",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Shimmer layer */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(105deg, transparent 30%, rgba(255,245,200,0.04) 50%, transparent 70%)",
+                pointerEvents: "none",
+              }}
+            />
+            {/* Phone icon */}
+            <svg
+              width={13}
+              height={13}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(196,163,90,0.85)"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ flexShrink: 0, position: "relative" }}
+            >
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.45 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.57a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            <span
+              style={{
+                fontSize: 10,
+                color: "rgba(196,163,90,0.72)",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                fontWeight: 600,
+                fontFamily: "Inter, system-ui, sans-serif",
+                position: "relative",
+              }}
+            >
+              TPO Nepal
+            </span>
+            <span
+              style={{
+                width: 1,
+                height: 13,
+                background: "rgba(196,163,90,0.25)",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: 12.5,
+                color: "rgba(245,210,110,0.97)",
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                fontFamily: "'Courier New', Courier, monospace",
+                position: "relative",
+              }}
+            >
+              1660-0102005
+            </span>
+          </a>
+        </div>
+
+        <style>{`
+          @keyframes crisis-heartbeat {
+            0%, 100% { transform: scale(1); }
+            14%       { transform: scale(1.18); }
+            28%       { transform: scale(1); }
+            42%       { transform: scale(1.1); }
+            56%       { transform: scale(1); }
+          }
+          @keyframes crisis-ring {
+            0%, 100% { opacity: 0; transform: scale(1); }
+            50%       { opacity: 1; transform: scale(1.55); }
+          }
+          .crisis-call-btn:hover {
+            background: linear-gradient(135deg, rgba(196,163,90,0.22) 0%, rgba(160,128,60,0.16) 100%) !important;
+            border-color: rgba(196,163,90,0.52) !important;
+            box-shadow: 0 4px 24px rgba(196,163,90,0.2), inset 0 1px 0 rgba(255,245,200,0.08) !important;
+            transform: translateY(-1px);
+          }
+        `}</style>
       </div>
     </div>
   );

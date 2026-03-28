@@ -8,12 +8,18 @@ export function generateKiteMotion() {
   };
 }
 
+/*
+  Each entry:
+    fill      — kite body color (must match the color value stored in DB / seedKites)
+    glow      — rgba for drop-shadow (higher opacity = stronger halo)
+    tail      — accent color for the tail string and bow decorations
+*/
 export const KITE_COLORS = [
-  { fill: "#c0392b", glow: "rgba(192,57,43,0.35)", tail: "#e74c3c" },
-  { fill: "#2d6a4f", glow: "rgba(45,106,79,0.35)", tail: "#6fcf97" },
-  { fill: "#6c3483", glow: "rgba(108,52,131,0.35)", tail: "#c39bd3" },
-  { fill: "#b7950b", glow: "rgba(183,149,11,0.35)", tail: "#f5a623" },
-  { fill: "#1a5276", glow: "rgba(26,82,118,0.35)", tail: "#5dade2" },
-  { fill: "#784212", glow: "rgba(120,66,18,0.35)", tail: "#f0a500" },
-  { fill: "#4a235a", glow: "rgba(74,35,90,0.35)", tail: "#a569bd" },
+  { fill: "#c0392b", glow: "rgba(220, 72, 56,  0.68)", tail: "#ff8a80" }, // crimson
+  { fill: "#2d6a4f", glow: "rgba(42,  112, 78,  0.62)", tail: "#55efc4" }, // emerald
+  { fill: "#6c3483", glow: "rgba(122, 56,  150, 0.68)", tail: "#d7a4f8" }, // violet
+  { fill: "#b7950b", glow: "rgba(200, 162, 14,  0.65)", tail: "#ffe066" }, // gold
+  { fill: "#1a5276", glow: "rgba(26,  100, 138, 0.62)", tail: "#74b9ff" }, // ocean
+  { fill: "#784212", glow: "rgba(145, 80,  22,  0.62)", tail: "#fdcb6e" }, // amber
+  { fill: "#4a235a", glow: "rgba(95,  45,  115, 0.68)", tail: "#c39bd3" }, // plum
 ];

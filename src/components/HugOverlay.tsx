@@ -19,7 +19,7 @@ export function HugOverlay({ visible, kiteMessage, kiteOwnerName, onConnect, onD
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           style={{
-            position: "absolute",
+            position: "fixed",
             inset: 0,
             background: "rgba(7,9,15,0.9)",
             display: "flex",

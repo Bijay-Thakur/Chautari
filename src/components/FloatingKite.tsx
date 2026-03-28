@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { KiteSVG } from "./KiteSVG";
 import { KITE_COLORS, generateKiteMotion } from "@/lib/kitePhysics";
 
@@ -25,19 +25,48 @@ type Props = {
   isNew?: boolean;
 };
 
-export function FloatingKite({ kite, currentUserId, onHug, motionProps, isNew = false }: Props) {
+export function FloatingKite({
+  kite,
+  currentUserId,
+  onHug,
+  motionProps,
+  isNew = false,
+}: Props) {
   const [hovered, setHovered] = useState(false);
+  const [held, setHeld] = useState(false);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isOwn = kite.user_id === currentUserId && !kite.isSeed;
   const colorEntry = KITE_COLORS.find((c) => c.fill === kite.color) ?? KITE_COLORS[0];
 
+  /*
+    Three-tier glow system:
+      resting  — soft ambient halo (two drop-shadow layers)
+      hovered  — bright, dramatic bloom (three layers, bigger radius)
+    The CSS `transition` on the inner div handles the smooth change
+    because Framer Motion is NOT animating `filter`, so the browser's
+    own transition engine takes over cleanly.
+  */
+  const glowResting = [
+    `drop-shadow(0 0  6px ${colorEntry.glow})`,
+    `drop-shadow(0 0 20px ${colorEntry.glow})`,
+  ].join(" ");
+
+  const glowHovered = [
+    `drop-shadow(0 0 10px ${colorEntry.glow})`,
+    `drop-shadow(0 0 28px ${colorEntry.glow})`,
+    `drop-shadow(0 0 55px ${colorEntry.glow})`,
+  ].join(" ");
+
   return (
-    /* Outer: positioning + entrance animation */
+    /* ── Outer: position on sky + entrance animation ── */
     <motion.div
       style={{
         position: "absolute",
         left: `${kite.position_x}%`,
         top: `${kite.position_y}%`,
         zIndex: hovered ? 20 : 10,
+        /* Needed so the ambient glow blob positions relative to this div */
+        isolation: "isolate",
       }}
       initial={isNew ? { y: 90, opacity: 0, scale: 0.55 } : { opacity: 0 }}
       animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -47,140 +76,200 @@ export function FloatingKite({ kite, currentUserId, onHug, motionProps, isNew = 
           : { duration: 0.45, ease: "easeOut" }
       }
     >
-      {/* Inner: continuous float */}
+      {/* ── Ambient glow blob behind the kite (pulsing, separate layer) ── */}
+      <motion.div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: "-28px",
+          borderRadius: "50%",
+          background: `radial-gradient(ellipse at center, ${colorEntry.glow}, transparent 72%)`,
+          filter: "blur(14px)",
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+        animate={{ opacity: [0.55, 0.85, 0.55] }}
+        transition={{ duration: 3.6 + Math.random() * 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* ── Inner: continuous floating motion + hover glow ── */}
       <motion.div
         style={{
-          cursor: isOwn ? "default" : "pointer",
-          filter: `drop-shadow(0 0 10px ${colorEntry.glow})`,
+          cursor: isOwn ? "default" : held ? "grabbing" : "grab",
           userSelect: "none",
+          filter: hovered || held ? glowHovered : glowResting,
+          transition: "filter 0.32s ease",
         }}
-        animate={{
-          rotate: motionProps.rotate,
-          x: motionProps.x,
-          y: motionProps.y,
-        }}
-        transition={{
-          duration: motionProps.duration,
-          delay: motionProps.delay,
-          repeat: Infinity,
-          repeatType: "mirror",
-          ease: "easeInOut",
-        }}
+        animate={
+          held
+            ? { rotate: 0, x: 0, y: 0, scale: 1.07 }
+            : {
+                rotate: motionProps.rotate,
+                x: motionProps.x,
+                y: motionProps.y,
+                scale: 1,
+              }
+        }
+        transition={
+          held
+            ? { duration: 0.28, ease: "easeOut" }
+            : {
+                duration: motionProps.duration,
+                delay: motionProps.delay,
+                repeat: Infinity,
+                repeatType: "mirror",
+                ease: "easeInOut",
+              }
+        }
         onHoverStart={() => setHovered(true)}
-        onHoverEnd={() => setHovered(false)}
-        onClick={() => !isOwn && onHug(kite.id)}
-        whileTap={!isOwn ? { scale: 0.9 } : {}}
+        onHoverEnd={() => {
+          setHovered(false);
+          if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+          setHeld(false);
+        }}
+        onPointerDown={() => {
+          holdTimerRef.current = setTimeout(() => setHeld(true), 160);
+        }}
+        onPointerUp={() => {
+          if (holdTimerRef.current) {
+            clearTimeout(holdTimerRef.current);
+            holdTimerRef.current = null;
+          }
+          setHeld(false);
+        }}
+        onClick={() => { if (!isOwn) onHug(kite.id); }}
+        onTap={() => { if (!isOwn) onHug(kite.id); }}
       >
         <KiteSVG color={kite.color} tailColor={colorEntry.tail} size={88} />
 
-        {/* Message label — word-wrapped inside the kite diamond */}
+        {/* ── Message — word-wrapped inside the kite body ── */}
         <div
           style={{
             position: "absolute",
-            top: "43%",
+            top: "42%",
             left: "50%",
             transform: "translate(-50%, -50%)",
             fontSize: 8.5,
-            color: "rgba(255,255,255,0.9)",
+            color: "rgba(255,255,255,0.94)",
             textAlign: "center",
-            width: 64,
-            lineHeight: 1.5,
-            maxHeight: 44,          /* ~3.5 lines visible */
+            width: 62,
+            lineHeight: 1.52,
+            maxHeight: 46,
             overflow: "hidden",
             pointerEvents: "none",
-            textShadow: "0 1px 6px rgba(0,0,0,0.98)",
+            textShadow: "0 1px 8px rgba(0,0,0,1), 0 0 2px rgba(0,0,0,0.9)",
             fontFamily: "Inter, system-ui, sans-serif",
-            fontWeight: 500,
+            fontWeight: 600,
             wordBreak: "break-word",
           }}
         >
           {kite.message}
         </div>
 
-        {/* Hug count badge */}
+        {/* ── Hug count badge ── */}
         {kite.hug_count > 0 && (
           <div
             style={{
               position: "absolute",
-              top: -8,
-              right: -10,
-              background: "rgba(245,166,35,0.92)",
+              top: -10,
+              right: -12,
+              background: "rgba(245,166,35,0.95)",
               color: "#07090f",
               fontSize: 8,
               fontWeight: 700,
               borderRadius: "999px",
-              padding: "2px 5px",
+              padding: "2px 6px",
               pointerEvents: "none",
               fontFamily: "Inter, system-ui, sans-serif",
-              lineHeight: 1.3,
-              boxShadow: "0 1px 4px rgba(0,0,0,0.5)",
+              lineHeight: 1.35,
+              boxShadow:
+                "0 2px 8px rgba(0,0,0,0.55), 0 0 10px rgba(245,166,35,0.45)",
             }}
           >
             {kite.hug_count}🤍
           </div>
         )}
 
-        {/* Owner indicator */}
+        {/* ── Owner indicator dot ── */}
         {isOwn && (
           <div
             style={{
               position: "absolute",
-              top: -7,
-              left: -7,
-              width: 14,
-              height: 14,
+              top: -8,
+              left: -8,
+              width: 15,
+              height: 15,
               borderRadius: "50%",
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(255,255,255,0.12)",
+              border: "1px solid rgba(255,255,255,0.3)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: 7,
               pointerEvents: "none",
+              boxShadow: "0 0 6px rgba(255,255,255,0.2)",
             }}
           >
             ✦
           </div>
         )}
 
-        {/* Hover tooltip — full message + hint */}
+        {/* ── Hover tooltip ── */}
         <AnimatePresence>
           {hovered && !isOwn && (
             <motion.div
-              initial={{ opacity: 0, y: 6, scale: 0.96 }}
+              initial={{ opacity: 0, y: 8, scale: 0.94 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
+              exit={{ opacity: 0, scale: 0.94 }}
               transition={{ duration: 0.18 }}
               style={{
                 position: "absolute",
-                bottom: -62,
+                bottom: -68,
                 left: "50%",
                 transform: "translateX(-50%)",
-                width: 160,
-                background: "rgba(10,13,22,0.94)",
-                border: "1px solid rgba(255,255,255,0.09)",
-                borderRadius: 8,
-                padding: "8px 10px",
+                width: 170,
+                background: "rgba(8,11,20,0.96)",
+                border: `1px solid ${colorEntry.glow.replace(/[\d.]+\)$/, "0.35)")}`,
+                borderRadius: 10,
+                padding: "9px 12px",
                 pointerEvents: "none",
                 fontFamily: "Inter, system-ui, sans-serif",
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
                 zIndex: 30,
+                boxShadow: `0 4px 24px rgba(0,0,0,0.6), 0 0 16px ${colorEntry.glow.replace(/[\d.]+\)$/, "0.2)")}`,
               }}
             >
+              {/* Coloured accent line at top */}
+              <div
+                style={{
+                  height: 2,
+                  borderRadius: 1,
+                  background: `linear-gradient(90deg, ${colorEntry.tail}, transparent)`,
+                  marginBottom: 7,
+                  opacity: 0.7,
+                }}
+              />
               <p
                 style={{
                   fontSize: 10,
-                  color: "rgba(255,255,255,0.75)",
-                  lineHeight: 1.5,
-                  marginBottom: 4,
+                  color: "rgba(255,255,255,0.8)",
+                  lineHeight: 1.55,
+                  marginBottom: 6,
                   fontStyle: "italic",
                 }}
               >
                 &ldquo;{kite.message}&rdquo;
               </p>
-              <p style={{ fontSize: 9, color: "rgba(245,166,35,0.6)", letterSpacing: "0.05em" }}>
-                tap to send a hug
+              <p
+                style={{
+                  fontSize: 9,
+                  color: colorEntry.tail,
+                  opacity: 0.75,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                tap to send a hug ✦
               </p>
             </motion.div>
           )}

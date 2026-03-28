@@ -151,6 +151,43 @@ body {
   animation: chain-settle 4s ease-in-out infinite;
 }
 
+/* ─── Scrollbar — 3 px, warm gold gradient, elegant ─────────────── */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(196, 163, 90, 0.75),
+    rgba(154, 123, 60, 0.48)
+  );
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(222, 190, 108, 0.92),
+    rgba(180, 145, 72, 0.68)
+  );
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(196, 163, 90, 0.52) transparent;
+}
+
 /* Star twinkle — used in Chautari Room sky */
 @keyframes twinkle {
   0%,
