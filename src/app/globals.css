@@ -150,3 +150,16 @@ body {
 .chain-settle {
   animation: chain-settle 4s ease-in-out infinite;
 }
+
+/* Star twinkle — used in Chautari Room sky */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: var(--star-base, 0.22);
+    transform: scale(1);
+  }
+  50% {
+    opacity: calc(var(--star-base, 0.22) * 3.5);
+    transform: scale(1.35);
+  }
+}
