@@ -22,17 +22,13 @@ export default function ProgressChain({ total, completedScores, currentIndex }: 
             <rect
               x="4" y="4" width="28" height="20" rx="10"
               fill="none"
-              stroke={isGold ? "#f6c90e" : isIron ? "#4a5568" : isCurrent ? "#6b7280" : "#2d3748"}
+              stroke={isGold ? "#c4a35a" : isIron ? "#5c5348" : isCurrent ? "#7a6f62" : "#3d3630"}
               strokeWidth="5"
-              style={{
-                filter: isGold ? "drop-shadow(0 0 6px #f6c90e)" : "none",
-                transition: "stroke 0.5s, filter 0.5s",
-              }}
+              style={{ transition: "stroke 0.5s" }}
             />
-            {/* Inner cutout */}
             <rect
               x="10" y="10" width="16" height="8" rx="4"
-              fill={isGold ? "#f6c90e" : isIron ? "#4a5568" : isCurrent ? "#6b7280" : "#2d3748"}
+              fill={isGold ? "#9a7b3c" : isIron ? "#5c5348" : isCurrent ? "#7a6f62" : "#3d3630"}
               style={{ transition: "fill 0.5s" }}
             />
           </svg>

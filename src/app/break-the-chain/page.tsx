@@ -1,40 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Suspense } from "react";
 import { scenarioQuestions } from "@/data/chainData";
 import ProgressChain from "@/components/ProgressChain";
 
-// Twinkling stars background
-function Stars() {
-  const stars = useRef(
-    Array.from({ length: 60 }).map(() => ({
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      duration: 2 + Math.random() * 4,
-      delay: Math.random() * 4,
-      size: Math.random() > 0.8 ? 3 : 2,
-    }))
-  );
-
+function WarmDepth() {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {stars.current.map((s, i) => (
-        <span
-          key={i}
-          className="star"
-          style={{
-            top: s.top,
-            left: s.left,
-            width: s.size,
-            height: s.size,
-            "--duration": `${s.duration}s`,
-            "--delay": `${s.delay}s`,
-          } as React.CSSProperties}
-        />
-      ))}
+    <div className="warm-ambient" aria-hidden>
+      <div
+        className="warm-ambient__blob"
+        style={{
+          width: "min(90vw, 480px)",
+          height: "min(90vw, 480px)",
+          top: "-12%", right: "-15%",
+          background: "rgba(180, 95, 70, 0.2)",
+        }}
+      />
+      <div
+        className="warm-ambient__blob"
+        style={{
+          width: "min(70vw, 380px)",
+          height: "min(70vw, 380px)",
+          bottom: "5%", left: "-18%",
+          background: "rgba(196, 163, 90, 0.11)",
+        }}
+      />
     </div>
   );
 }
@@ -52,7 +45,6 @@ function BreakTheChainContent() {
 
   const question = scenarioQuestions[currentIndex];
 
-  // Scores for completed answers (for chain display)
   const completedScores = scenarioQuestions.map((q) => {
     const answerId = answers[q.id];
     if (!answerId) return null;
@@ -60,7 +52,7 @@ function BreakTheChainContent() {
   });
 
   function handleSelect(id: string) {
-    if (selectedId) return; // already selected
+    if (selectedId) return;
     setSelectedId(id);
     setShowReflection(true);
     setTimeout(() => setCanContinue(true), 2000);
@@ -77,7 +69,6 @@ function BreakTheChainContent() {
       setShowReflection(false);
       setCanContinue(false);
     } else {
-      // Done — go to result
       const ca = encodeURIComponent(btoa(JSON.stringify(newAnswers)));
       router.push(`/break-the-chain/result?sa=${screeningAnswersRaw}&ca=${ca}`);
     }
@@ -86,13 +77,22 @@ function BreakTheChainContent() {
   const selectedOption = question.options.find((o) => o.id === selectedId);
 
   return (
-    <div className="min-h-screen relative px-4 py-10" style={{ background: "#0f172a" }}>
-      <Stars />
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -14 }}
+      transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      className="min-h-screen relative px-4 py-10 warm-mesh-dark overflow-hidden"
+    >
+      <WarmDepth />
 
       <div className="relative z-10 max-w-2xl mx-auto">
         {/* Chain progress */}
         <div className="mb-6">
-          <p className="text-center text-xs text-slate-400 mb-2 tracking-wider">
+          <p
+            className="text-center text-[10px] mb-2 tracking-widest uppercase"
+            style={{ color: "rgba(212,196,176,0.35)" }}
+          >
             Scenario {currentIndex + 1} of {scenarioQuestions.length}
           </p>
           <ProgressChain
@@ -102,30 +102,41 @@ function BreakTheChainContent() {
           />
         </div>
 
-        {/* Scenario card */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 32 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.35 }}
+            exit={{ opacity: 0, x: -32 }}
+            transition={{ duration: 0.32 }}
           >
-            {/* Scenario text */}
-            <div className="mb-6 p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <p className="text-xs uppercase tracking-widest mb-3" style={{ color: "#d97706" }}>
+            {/* Scenario card */}
+            <div
+              className="mb-5 p-5 rounded-2xl"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                border: "1px solid rgba(196,163,90,0.1)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+              }}
+            >
+              <p
+                className="text-[10px] uppercase tracking-widest mb-3"
+                style={{ color: "rgba(196,163,90,0.65)" }}
+              >
                 Imagine this situation:
               </p>
-              <p className="text-base font-medium leading-relaxed mb-3 text-slate-100">
+              <p
+                className="text-base font-medium leading-relaxed"
+                style={{ color: "rgba(244,232,216,0.9)" }}
+              >
                 {question.situation}
-              </p>
-              <p className="ne text-sm leading-relaxed text-slate-400">
-                {question.situationNe}
               </p>
             </div>
 
             {/* Options */}
-            <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-col gap-2.5 mb-4">
               {question.options.map((opt) => {
                 const isSelected = selectedId === opt.id;
                 const isLocked = !!selectedId;
@@ -135,21 +146,24 @@ function BreakTheChainContent() {
                     key={opt.id}
                     onClick={() => handleSelect(opt.id)}
                     disabled={isLocked && !isSelected}
-                    className="w-full text-left px-5 py-4 rounded-xl border-2 transition-all duration-200"
+                    className="w-full text-left px-5 py-4 rounded-xl border transition-all duration-200 active:scale-[0.985]"
                     style={{
                       background: isSelected
-                        ? "rgba(217,119,6,0.22)"
-                        : "rgba(255,255,255,0.04)",
-                      borderColor: isSelected ? "#d97706" : "rgba(255,255,255,0.09)",
-                      color: isSelected ? "#fef3c7" : "#cbd5e1",
-                      opacity: isLocked && !isSelected ? 0.4 : 1,
+                        ? "rgba(196,163,90,0.12)"
+                        : "rgba(255,255,255,0.03)",
+                      borderColor: isSelected
+                        ? "rgba(196,163,90,0.4)"
+                        : "rgba(255,255,255,0.07)",
+                      color: isSelected
+                        ? "#f0e4d4"
+                        : "rgba(212,196,176,0.82)",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      opacity: isLocked && !isSelected ? 0.38 : 1,
                       cursor: isLocked ? "default" : "pointer",
                     }}
                   >
                     <span className="text-sm font-medium leading-snug">{opt.text}</span>
-                    <span className="ne block text-xs mt-1" style={{ color: isSelected ? "#fcd34d" : "#64748b" }}>
-                      {opt.textNe}
-                    </span>
                   </button>
                 );
               })}
@@ -159,23 +173,30 @@ function BreakTheChainContent() {
             <AnimatePresence>
               {showReflection && selectedOption && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.45 }}
                   className="mb-4 px-5 py-4 rounded-xl"
-                  style={{ background: "rgba(217,119,6,0.1)", border: "1px solid rgba(217,119,6,0.25)" }}
+                  style={{
+                    background: "rgba(196,163,90,0.07)",
+                    border: "1px solid rgba(196,163,90,0.18)",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                  }}
                 >
-                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: "#d97706" }}>
+                  <p
+                    className="text-[10px] uppercase tracking-widest mb-2"
+                    style={{ color: "rgba(196,163,90,0.7)" }}
+                  >
                     Reflection
                   </p>
-                  <p className="text-sm italic leading-relaxed" style={{ color: "#fde68a" }}>
+                  <p className="text-sm italic leading-relaxed" style={{ color: "rgba(232,217,184,0.85)" }}>
                     &ldquo;{selectedOption.reflection}&rdquo;
                   </p>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Continue button */}
             <AnimatePresence>
               {canContinue && (
                 <motion.div
@@ -185,10 +206,15 @@ function BreakTheChainContent() {
                 >
                   <button
                     onClick={handleContinue}
-                    className="px-8 py-3 rounded-xl font-semibold text-white transition-all hover:opacity-90 active:scale-95"
-                    style={{ background: "#d97706" }}
+                    className="px-8 py-3 rounded-xl font-semibold text-white transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer"
+                    style={{
+                      background: "linear-gradient(180deg, #b8923d 0%, #9a7b3c 100%)",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18)",
+                    }}
                   >
-                    {currentIndex === scenarioQuestions.length - 1 ? "See my result →" : "Continue →"}
+                    {currentIndex === scenarioQuestions.length - 1
+                      ? "See my result →"
+                      : "Continue →"}
                   </button>
                 </motion.div>
               )}
@@ -196,18 +222,25 @@ function BreakTheChainContent() {
           </motion.div>
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export default function BreakTheChainPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f172a" }}>
-        <div className="w-10 h-10 rounded-full border-4 animate-spin"
-          style={{ borderColor: "#d97706", borderTopColor: "transparent" }} />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center warm-mesh-dark">
+          <div
+            className="w-10 h-10 rounded-full border-[2.5px] animate-spin"
+            style={{
+              borderColor: "rgba(196,163,90,0.25)",
+              borderTopColor: "rgba(196,163,90,0.9)",
+            }}
+          />
+        </div>
+      }
+    >
       <BreakTheChainContent />
     </Suspense>
   );

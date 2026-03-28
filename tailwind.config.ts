@@ -19,7 +19,9 @@ const config: Config = {
         "chain-gold": "#f6c90e",
       },
       fontFamily: {
-        nepali: ["Noto Sans Devanagari", "sans-serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "ui-serif", "Georgia", "serif"],
+        nepali: ["var(--font-nepali)", "Noto Sans Devanagari", "sans-serif"],
       },
     },
   },

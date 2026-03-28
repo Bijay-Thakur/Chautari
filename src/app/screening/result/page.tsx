@@ -6,6 +6,86 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { calculateScreeningScore, categoryLabels, ScreeningQuestion } from "@/data/chainData";
 
+const fade = {
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as number[] },
+};
+
+function GlassCard({ children, accentColor }: { children: React.ReactNode; accentColor: string }) {
+  return (
+    <div
+      className="w-full rounded-2xl px-7 py-6"
+      style={{
+        background: "rgba(255,255,255,0.03)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        border: `1px solid ${accentColor}`,
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function ActionButton({
+  href,
+  tel,
+  primary,
+  children,
+}: {
+  href?: string;
+  tel?: string;
+  primary?: boolean;
+  children: React.ReactNode;
+}) {
+  const base =
+    "block w-full py-3.5 rounded-xl text-center font-semibold text-sm transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer";
+  const style = primary
+    ? {
+        background: "linear-gradient(180deg, #b8923d 0%, #9a7b3c 100%)",
+        color: "#fdf8f0",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18)",
+      }
+    : {
+        background: "rgba(255,255,255,0.04)",
+        color: "rgba(212,196,176,0.7)",
+        border: "1px solid rgba(255,255,255,0.08)",
+      };
+
+  if (tel) {
+    return (
+      <a href={tel} className={base} style={style}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link href={href!} className={base} style={style}>
+      {children}
+    </Link>
+  );
+}
+
+function Atmosphere({ tint }: { tint: string }) {
+  return (
+    <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
+      <div
+        style={{
+          position: "absolute",
+          top: "-20%",
+          left: "20%",
+          width: "65%",
+          height: "75%",
+          background: `radial-gradient(ellipse, ${tint} 0%, transparent 65%)`,
+          filter: "blur(80px)",
+        }}
+      />
+    </div>
+  );
+}
+
 function ScreeningResultContent() {
   const params = useSearchParams();
   const raw = params.get("a") ?? "";
@@ -14,72 +94,70 @@ function ScreeningResultContent() {
   try {
     answers = JSON.parse(atob(decodeURIComponent(raw)));
   } catch {
-    // invalid state — fall through with empty
+    // invalid
   }
 
   const { score, result, dominantCategory } = calculateScreeningScore(answers);
-
-  // Build next-page URL with screening answers carried forward
   const nextUrl = `/break-the-chain?sa=${encodeURIComponent(raw)}`;
 
   if (result === "strong_signs") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
-        style={{ background: "#3d0c02" }}>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-5 py-16"
+        style={{ background: "#0a0807" }}
+      >
+        <Atmosphere tint="rgba(168,88,60,0.18)" />
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-xl w-full text-center"
+          initial={fade.initial}
+          animate={fade.animate}
+          transition={fade.transition}
+          className="max-w-md w-full text-center relative z-10 flex flex-col gap-5"
         >
-          <p className="text-amber-400 text-sm font-medium tracking-widest uppercase mb-6">
-            Your reflection
-          </p>
-
-          <h1 className="ne text-3xl font-bold mb-3" style={{ color: "#fef3c7" }}>
-            तपाईंले धेरै कुरा बोकिरहनुभएको छ।
-          </h1>
-          <h2 className="text-xl font-semibold mb-6" style={{ color: "#fcd34d" }}>
-            You have been carrying a lot.
-          </h2>
-
-          <p className="text-amber-100 leading-relaxed mb-8 text-base">
-            What you felt growing up was real. And it may have shaped more than you know.
-            That is not your fault — but it can be changed.
-          </p>
-
-          {/* Category breakdown */}
-          {dominantCategory && dominantCategory !== "general" && (
-            <div className="mb-8 p-4 rounded-xl text-left"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(253,243,236,0.15)" }}>
-              <p className="text-xs uppercase tracking-widest text-amber-400 mb-2">Strongest pattern</p>
-              <p className="text-amber-100 font-medium">
-                {categoryLabels[dominantCategory as ScreeningQuestion["category"]] ?? dominantCategory}
-              </p>
-            </div>
-          )}
-
-          <div className="text-sm mb-10" style={{ color: "rgba(253,243,236,0.45)" }}>
-            Score: {score}/10 — This is a reflection, not a diagnosis.
+          <div>
+            <p
+              className="text-xs font-semibold uppercase tracking-[0.3em] mb-5"
+              style={{ color: "rgba(196,163,90,0.55)" }}
+            >
+              Your reflection
+            </p>
+            <h1
+              className="font-display mb-2"
+              style={{
+                fontSize: "clamp(1.9rem, 6vw, 2.5rem)",
+                letterSpacing: "-0.03em",
+                color: "#e8d9b8",
+              }}
+            >
+              You have been carrying a lot.
+            </h1>
+            <p className="text-sm leading-relaxed" style={{ color: "rgba(212,196,176,0.48)" }}>
+              What you felt growing up was real. And it may have shaped more than you know.
+              That is not your fault — but it can be changed.
+            </p>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <Link
-              href={nextUrl}
-              className="block w-full py-4 rounded-xl font-bold text-center transition-all hover:opacity-90"
-              style={{ background: "#d97706", color: "#fff" }}
-            >
-              <span className="ne block text-base">के तपाईं श्रृंखला तोड्न तयार हुनुहुन्छ?</span>
-              <span className="text-sm font-normal">Are you ready to see if you can break the chain?</span>
-            </Link>
-            <a
-              href="tel:16600102005"
-              className="block w-full py-3 rounded-xl font-semibold text-center transition-all hover:opacity-90"
-              style={{ background: "rgba(253,243,236,0.1)", color: "#fcd34d", border: "1px solid rgba(253,243,236,0.2)" }}
-            >
-              <span className="ne block text-sm">अहिले कुरा गर्नुहोस्</span>
-              <span className="text-xs font-normal">Talk to someone now — TPO Nepal</span>
-            </a>
+          {dominantCategory && dominantCategory !== "general" && (
+            <GlassCard accentColor="rgba(196,163,90,0.15)">
+              <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(196,163,90,0.6)" }}>
+                Strongest pattern
+              </p>
+              <p className="font-semibold text-sm" style={{ color: "rgba(232,217,184,0.85)" }}>
+                {categoryLabels[dominantCategory as ScreeningQuestion["category"]] ?? dominantCategory}
+              </p>
+            </GlassCard>
+          )}
+
+          <p className="text-xs" style={{ color: "rgba(212,196,176,0.25)" }}>
+            Score: {score}/10 — This is a reflection, not a diagnosis.
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <ActionButton href={nextUrl} primary>
+              Are you ready to break the chain? →
+            </ActionButton>
+            <ActionButton tel="tel:16600102005">
+              Talk to someone now — TPO Nepal
+            </ActionButton>
           </div>
         </motion.div>
       </div>
@@ -88,51 +166,51 @@ function ScreeningResultContent() {
 
   if (result === "moderate_signs") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
-        style={{ background: "#431407" }}>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-5 py-16"
+        style={{ background: "#0a0807" }}
+      >
+        <Atmosphere tint="rgba(150,100,50,0.15)" />
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-xl w-full text-center"
+          initial={fade.initial}
+          animate={fade.animate}
+          transition={fade.transition}
+          className="max-w-md w-full text-center relative z-10 flex flex-col gap-5"
         >
-          <p className="text-amber-400 text-sm font-medium tracking-widest uppercase mb-6">
-            Your reflection
-          </p>
-
-          <h1 className="ne text-3xl font-bold mb-3" style={{ color: "#fef3c7" }}>
-            केही ढाँचाहरू देखिन्छन्।
-          </h1>
-          <h2 className="text-xl font-semibold mb-6" style={{ color: "#fcd34d" }}>
-            Some patterns are showing.
-          </h2>
-
-          <p className="text-amber-100 leading-relaxed mb-8 text-base">
-            Recognising these patterns takes courage. Awareness is the first step —
-            and you are already here. That means something.
-          </p>
-
-          <div className="text-sm mb-10" style={{ color: "rgba(253,243,236,0.45)" }}>
-            Score: {score}/10 — This is a reflection, not a diagnosis.
+          <div>
+            <p
+              className="text-xs font-semibold uppercase tracking-[0.3em] mb-5"
+              style={{ color: "rgba(196,163,90,0.55)" }}
+            >
+              Your reflection
+            </p>
+            <h1
+              className="font-display mb-2"
+              style={{
+                fontSize: "clamp(1.9rem, 6vw, 2.5rem)",
+                letterSpacing: "-0.03em",
+                color: "#e8d9b8",
+              }}
+            >
+              Some patterns are showing.
+            </h1>
+            <p className="text-sm leading-relaxed" style={{ color: "rgba(212,196,176,0.48)" }}>
+              Recognising these patterns takes courage. Awareness is the first step — and you are already here.
+              That means something.
+            </p>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <Link
-              href={nextUrl}
-              className="block w-full py-4 rounded-xl font-bold text-center transition-all hover:opacity-90"
-              style={{ background: "#d97706", color: "#fff" }}
-            >
-              <span className="ne block text-base">के तपाईं श्रृंखला तोड्न तयार हुनुहुन्छ?</span>
-              <span className="text-sm font-normal">Are you ready to see if you can break the chain?</span>
-            </Link>
-            <a
-              href="tel:16600102005"
-              className="block w-full py-3 rounded-xl font-semibold text-center transition-all hover:opacity-90"
-              style={{ background: "rgba(253,243,236,0.1)", color: "#fcd34d", border: "1px solid rgba(253,243,236,0.2)" }}
-            >
-              <span className="ne block text-sm">अहिले कुरा गर्नुहोस्</span>
-              <span className="text-xs font-normal">Talk to someone now — TPO Nepal</span>
-            </a>
+          <p className="text-xs" style={{ color: "rgba(212,196,176,0.25)" }}>
+            Score: {score}/10 — This is a reflection, not a diagnosis.
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <ActionButton href={nextUrl} primary>
+              Are you ready to break the chain? →
+            </ActionButton>
+            <ActionButton tel="tel:16600102005">
+              Talk to someone now — TPO Nepal
+            </ActionButton>
           </div>
         </motion.div>
       </div>
@@ -141,50 +219,51 @@ function ScreeningResultContent() {
 
   // low_signs
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
-      style={{ background: "#0d2b1a" }}>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-5 py-16"
+      style={{ background: "#0a0807" }}
+    >
+      <Atmosphere tint="rgba(78,118,100,0.15)" />
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="max-w-xl w-full text-center"
+        initial={fade.initial}
+        animate={fade.animate}
+        transition={fade.transition}
+        className="max-w-md w-full text-center relative z-10 flex flex-col gap-5"
       >
-        <p className="text-green-400 text-sm font-medium tracking-widest uppercase mb-6">
-          Your reflection
-        </p>
-
-        <h1 className="ne text-3xl font-bold mb-3" style={{ color: "#d1fae5" }}>
-          तपाईं सुरक्षित ठाउँमा देखिनुहुन्छ।
-        </h1>
-        <h2 className="text-xl font-semibold mb-6" style={{ color: "#6ee7b7" }}>
-          You seem to be in a safer place.
-        </h2>
-
-        <p className="text-green-100 leading-relaxed mb-8 text-base">
-          But if anything in these questions stirred something — trust that feeling.
-          There is no wrong reason to explore this.
-        </p>
-
-        <div className="text-sm mb-10" style={{ color: "rgba(209,250,229,0.4)" }}>
-          Score: {score}/10 — This is a reflection, not a diagnosis.
+        <div>
+          <p
+            className="text-xs font-semibold uppercase tracking-[0.3em] mb-5"
+            style={{ color: "rgba(141,175,152,0.6)" }}
+          >
+            Your reflection
+          </p>
+          <h1
+            className="font-display mb-2"
+            style={{
+              fontSize: "clamp(1.9rem, 6vw, 2.5rem)",
+              letterSpacing: "-0.03em",
+              color: "#c8ddd0",
+            }}
+          >
+            You seem to be in a safer place.
+          </h1>
+          <p className="text-sm leading-relaxed" style={{ color: "rgba(184,212,196,0.48)" }}>
+            But if anything in these questions stirred something — trust that feeling. There is no wrong reason
+            to explore this.
+          </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <Link
-            href={nextUrl}
-            className="block w-full py-4 rounded-xl font-bold text-center transition-all hover:opacity-90"
-            style={{ background: "#16a34a", color: "#fff" }}
-          >
-            <span className="block text-base">Still want to try Break the Chain?</span>
-            <span className="ne text-sm font-normal">श्रृंखला तोड्न प्रयास गर्नुहुन्छ?</span>
-          </Link>
-          <Link
-            href="/chautari"
-            className="block w-full py-3 rounded-xl font-semibold text-center transition-all hover:opacity-90"
-            style={{ background: "rgba(209,250,229,0.08)", color: "#6ee7b7", border: "1px solid rgba(209,250,229,0.2)" }}
-          >
+        <p className="text-xs" style={{ color: "rgba(184,212,196,0.25)" }}>
+          Score: {score}/10 — This is a reflection, not a diagnosis.
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <ActionButton href={nextUrl} primary>
+            Still want to try Break the Chain? →
+          </ActionButton>
+          <ActionButton href="/chautari">
             Enter Chautari — a space to rest
-          </Link>
+          </ActionButton>
         </div>
       </motion.div>
     </div>
@@ -193,12 +272,22 @@ function ScreeningResultContent() {
 
 export default function ScreeningResultPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#3d0c02" }}>
-        <div className="w-10 h-10 rounded-full border-4 animate-spin"
-          style={{ borderColor: "#d97706", borderTopColor: "transparent" }} />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div
+          className="min-h-screen flex items-center justify-center"
+          style={{ background: "#0a0807" }}
+        >
+          <div
+            className="w-10 h-10 rounded-full border-[2.5px] animate-spin"
+            style={{
+              borderColor: "rgba(196,163,90,0.25)",
+              borderTopColor: "rgba(196,163,90,0.9)",
+            }}
+          />
+        </div>
+      }
+    >
       <ScreeningResultContent />
     </Suspense>
   );

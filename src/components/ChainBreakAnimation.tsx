@@ -23,7 +23,7 @@ function ConfettiKite({ delay, x, color }: { delay: number; x: number; color: st
 const confettiItems = Array.from({ length: 24 }).map((_, i) => ({
   delay: 1.8 + i * 0.08,
   x: (Math.random() - 0.5) * 600,
-  color: ["#ef4444", "#f59e0b", "#16a34a", "#f6c90e", "#3b82f6", "#ec4899"][i % 6],
+  color: ["#b5654a", "#c4a35a", "#5d7a62", "#9a7b3c", "#5c6d8a", "#a8485c"][i % 6],
 }));
 
 // SVG chain — two halves that fly apart
@@ -53,12 +53,12 @@ function ChainSVG({ phase }: { phase: number }) {
             <svg key={i} width="44" height="32" viewBox="0 0 44 32">
               <rect x="4" y="4" width="36" height="24" rx="12"
                 fill="none"
-                stroke={linkGold(i) ? "#f6c90e" : "#4a5568"}
+                stroke={linkGold(i) ? "#c4a35a" : "#5c5348"}
                 strokeWidth="6"
-                style={{ filter: linkGold(i) ? "drop-shadow(0 0 8px #f6c90e)" : "none", transition: "stroke 0.4s, filter 0.4s" }}
+                style={{ transition: "stroke 0.4s" }}
               />
               <rect x="12" y="12" width="20" height="8" rx="4"
-                fill={linkGold(i) ? "#f6c90e" : "#4a5568"}
+                fill={linkGold(i) ? "#9a7b3c" : "#5c5348"}
                 style={{ transition: "fill 0.4s" }}
               />
             </svg>
@@ -75,12 +75,12 @@ function ChainSVG({ phase }: { phase: number }) {
             <svg key={i + 3} width="44" height="32" viewBox="0 0 44 32">
               <rect x="4" y="4" width="36" height="24" rx="12"
                 fill="none"
-                stroke={linkGold(i + 3) ? "#f6c90e" : "#4a5568"}
+                stroke={linkGold(i + 3) ? "#c4a35a" : "#5c5348"}
                 strokeWidth="6"
-                style={{ filter: linkGold(i + 3) ? "drop-shadow(0 0 8px #f6c90e)" : "none", transition: "stroke 0.4s, filter 0.4s" }}
+                style={{ transition: "stroke 0.4s" }}
               />
               <rect x="12" y="12" width="20" height="8" rx="4"
-                fill={linkGold(i + 3) ? "#f6c90e" : "#4a5568"}
+                fill={linkGold(i + 3) ? "#9a7b3c" : "#5c5348"}
                 style={{ transition: "fill 0.4s" }}
               />
             </svg>
@@ -164,19 +164,22 @@ export default function ChainBreakAnimation({ totalScore, maxScore }: { totalSco
             transition={{ duration: 0.8 }}
             className="text-center px-4"
           >
-            <p className="ne text-3xl font-bold mb-2" style={{ color: "#f6c90e" }}>
-              तपाईंले श्रृंखला तोड्नुभयो।
-            </p>
-            <p className="text-xl font-semibold mb-4" style={{ color: "#fef3c7" }}>
+            <p className="text-xl font-semibold mb-4 font-display" style={{ color: "#e8d9b8" }}>
               You broke the chain.
             </p>
-            <p className="text-base max-w-md mx-auto leading-relaxed" style={{ color: "#d1d5db" }}>
+            <p className="text-base max-w-md mx-auto leading-relaxed" style={{ color: "rgba(212,196,176,0.75)" }}>
               What was passed to you — stops here.
               <br />
               What you pass forward — is yours to choose.
             </p>
-            <div className="mt-6 inline-block px-6 py-2 rounded-full text-sm font-semibold"
-              style={{ background: "rgba(246,201,14,0.15)", border: "1px solid #f6c90e", color: "#f6c90e" }}>
+            <div
+              className="mt-6 inline-block px-6 py-2 rounded-full text-sm font-semibold"
+              style={{
+                background: "rgba(196,163,90,0.12)",
+                border: "1px solid rgba(196,163,90,0.35)",
+                color: "#c4a35a",
+              }}
+            >
               Your awareness score: {totalScore}/{maxScore}
             </div>
           </motion.div>

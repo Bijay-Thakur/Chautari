@@ -13,10 +13,10 @@ export default function ScreeningPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [direction, setDirection] = useState(1); // 1 = forward, -1 = back
+  const [direction, setDirection] = useState(1);
 
   const question = screeningQuestions[currentIndex];
-  const progress = ((currentIndex) / screeningQuestions.length) * 100;
+  const progress = (currentIndex / screeningQuestions.length) * 100;
 
   function handleSelect(id: string) {
     setSelectedId(id);
@@ -32,12 +32,11 @@ export default function ScreeningPage() {
       setCurrentIndex(currentIndex + 1);
       setSelectedId(answers[screeningQuestions[currentIndex + 1]?.id] ?? null);
     } else {
-      // Last question — go to result
       setIsLoading(true);
       setTimeout(() => {
         const encoded = encodeURIComponent(btoa(JSON.stringify(newAnswers)));
         router.push(`/screening/result?a=${encoded}`);
-      }, 1500);
+      }, 1400);
     }
   }
 
@@ -54,49 +53,65 @@ export default function ScreeningPage() {
   if (isLoading) {
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-center gap-6 px-4"
-        style={{ background: "#fdf6ec" }}
+        className="min-h-screen flex flex-col items-center justify-center gap-5"
+        style={{ background: "#0a0807" }}
       >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 rounded-full border-4"
-          style={{ borderColor: "#d97706", borderTopColor: "transparent" }}
+        <div
+          className="w-11 h-11 rounded-full border-[2.5px] animate-spin"
+          style={{
+            borderColor: "rgba(196,163,90,0.25)",
+            borderTopColor: "rgba(196,163,90,0.9)",
+          }}
         />
-        <p className="text-center text-lg font-medium" style={{ color: "#92400e" }}>
-          Processing your responses with care...
-        </p>
-        <p className="ne text-sm" style={{ color: "#b45309" }}>
-          तपाईंका उत्तरहरू सावधानीपूर्वक प्रशोधन गरिँदैछ...
+        <p
+          className="text-sm font-medium tracking-wide"
+          style={{ color: "rgba(212,196,176,0.5)" }}
+        >
+          Processing your responses with care…
         </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-4 py-8" style={{ background: "#fdf6ec" }}>
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -14 }}
+      transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      className="min-h-screen px-4 py-8 warm-mesh-dark"
+    >
       {/* Progress bar */}
       <div className="max-w-2xl mx-auto mb-8">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3 mb-2">
           <button
             onClick={handleBack}
-            className="p-2 rounded-full hover:bg-amber-100 transition-colors"
-            style={{ color: "#92400e" }}
+            className="p-2 rounded-full transition-all duration-200 cursor-pointer active:scale-[0.96] hover:bg-white/[0.05]"
+            style={{ color: "rgba(196,163,90,0.7)" }}
             aria-label="Go back"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
           </button>
-          <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "#e8d5b0" }}>
+          <div
+            className="flex-1 h-[3px] rounded-full overflow-hidden"
+            style={{ background: "rgba(196,163,90,0.1)" }}
+          >
             <motion.div
               className="h-full rounded-full"
-              style={{ background: "#d97706" }}
+              style={{
+                background: "linear-gradient(90deg, #9a7b3c 0%, #c4a35a 100%)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)",
+              }}
               initial={{ width: `${progress}%` }}
-              animate={{ width: `${((currentIndex) / screeningQuestions.length) * 100}%` }}
+              animate={{ width: `${(currentIndex / screeningQuestions.length) * 100}%` }}
               transition={{ duration: 0.4 }}
             />
           </div>
-          <span className="text-xs font-medium" style={{ color: "#92400e", minWidth: "3rem", textAlign: "right" }}>
-            {currentIndex + 1} / {screeningQuestions.length}
+          <span
+            className="text-xs font-semibold tabular-nums"
+            style={{ color: "rgba(196,163,90,0.6)", minWidth: "2.8rem", textAlign: "right" }}
+          >
+            {currentIndex + 1}/{screeningQuestions.length}
           </span>
         </div>
       </div>
@@ -110,7 +125,6 @@ export default function ScreeningPage() {
             totalQuestions={screeningQuestions.length}
             categoryLabel={categoryLabels[question.category]}
             text={question.text}
-            textNe={question.textNe}
             options={question.options}
             selectedId={selectedId}
             onSelect={handleSelect}
@@ -118,7 +132,6 @@ export default function ScreeningPage() {
           />
         </AnimatePresence>
 
-        {/* Next button */}
         <AnimatePresence>
           {selectedId && (
             <motion.div
@@ -129,8 +142,11 @@ export default function ScreeningPage() {
             >
               <button
                 onClick={handleNext}
-                className="px-8 py-3 rounded-xl font-semibold text-white transition-all hover:opacity-90 active:scale-95"
-                style={{ background: "#d97706" }}
+                className="px-8 py-3 rounded-xl font-semibold text-white transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer"
+                style={{
+                  background: "linear-gradient(180deg, #b8923d 0%, #9a7b3c 100%)",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18)",
+                }}
               >
                 {currentIndex === screeningQuestions.length - 1 ? "See my result →" : "Next →"}
               </button>
@@ -138,6 +154,6 @@ export default function ScreeningPage() {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

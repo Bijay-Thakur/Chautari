@@ -1,9 +1,30 @@
 import type { Metadata } from "next";
+import { Fraunces, Noto_Sans_Devanagari, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import CrisisBar from "@/components/CrisisBar";
 
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const sourceSans = Source_Sans_3({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const notoNepali = Noto_Sans_Devanagari({
+  subsets: ["devanagari"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-nepali",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "साथी — Saathi | Break the Chain",
+  title: "Chautari | Break the Chain",
   description: "A culturally grounded safe space for Nepali youth. Understand generational trauma — and choose what you pass forward.",
 };
 
@@ -12,18 +33,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const fontVars = `${fraunces.variable} ${sourceSans.variable} ${notoNepali.variable}`;
+
   return (
-    <html lang="ne">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="antialiased">
-        <main className="pb-16">
+    <html lang="ne" className={fontVars} style={{ background: "var(--bg-root)" }}>
+      <body className="antialiased grain font-sans text-[var(--text-primary)]" style={{ background: "var(--bg-root)" }}>
+        <main className="pb-12">
           {children}
         </main>
         <CrisisBar />
