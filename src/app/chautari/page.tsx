@@ -101,7 +101,7 @@ export default function ChautariRoom() {
       setRoomId(rid);
 
       /* Clear only this user's previous kites — other users' kites stay */
-      await supabase.from("kites").delete().eq("room_id", rid).eq("user_id", uid);
+      await supabase.from("kites").delete().eq("room_id", rid).eq("user_id", userId);
 
       const seeds = makeSeedKites();
       setKites(seeds);
@@ -406,7 +406,7 @@ export default function ChautariRoom() {
 
       {/* ── Top-right: back ── */}
       <Link
-        href="/home"
+        href="/"
         style={{
           position: "absolute",
           top: 18,
@@ -428,7 +428,7 @@ export default function ChautariRoom() {
           top: 0,
           left: 0,
           right: 0,
-          bottom: 58,
+          bottom: 60,
         }}
       >
         {/* Kites */}
@@ -504,7 +504,7 @@ export default function ChautariRoom() {
         />
       )}
 
-      {/* ── Crisis bar ── */}
+      {/* ── Crisis bar — urgent tone, readable copy, green call CTA ── */}
       <div
         style={{
           position: "fixed",
@@ -515,55 +515,58 @@ export default function ChautariRoom() {
           overflow: "hidden",
         }}
       >
-        {/* Radiant top border — fades left and right */}
         <div
           style={{
             height: 1,
             background:
-              "linear-gradient(90deg, transparent 0%, rgba(196,163,90,0.6) 25%, rgba(220,100,80,0.5) 55%, rgba(196,163,90,0.6) 75%, transparent 100%)",
+              "linear-gradient(90deg, transparent 0%, rgba(255,170,160,0.5) 25%, rgba(240,130,125,0.55) 50%, rgba(255,170,160,0.5) 75%, transparent 100%)",
           }}
         />
 
         <div
           style={{
-            height: 57,
+            minHeight: 60,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0 24px",
+            padding: "9px 16px 11px",
+            gap: 12,
             background:
-              "linear-gradient(to right, rgba(16,9,4,0.99) 0%, rgba(9,10,18,0.98) 60%, rgba(12,9,5,0.99) 100%)",
+              "linear-gradient(180deg, rgba(92, 52, 64, 0.78) 0%, rgba(62, 44, 54, 0.82) 45%, rgba(48, 36, 44, 0.86) 100%)",
             backdropFilter: "blur(28px)",
             WebkitBackdropFilter: "blur(28px)",
-            boxShadow: "0 -16px 48px rgba(0,0,0,0.55)",
-            gap: 16,
+            boxShadow:
+              "0 -8px 32px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,200,195,0.08)",
             position: "relative",
           }}
         >
-          {/* Warm ambient bleed behind the left content */}
           <div
             style={{
               position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: "40%",
+              inset: 0,
               background:
-                "radial-gradient(ellipse at 0% 50%, rgba(185,70,55,0.08), transparent 70%)",
+                "radial-gradient(ellipse 100% 140% at 50% 0%, rgba(200, 100, 110, 0.1), transparent 58%)",
               pointerEvents: "none",
             }}
           />
 
-          {/* Left: heart icon + layered text */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, position: "relative" }}>
-            {/* Pulsing heart circle */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              position: "relative",
+              minWidth: 0,
+              flex: 1,
+            }}
+          >
             <div style={{ position: "relative", flexShrink: 0 }}>
               <div
                 style={{
                   position: "absolute",
                   inset: -4,
                   borderRadius: "50%",
-                  background: "rgba(185,70,55,0.12)",
+                  background: "rgba(255, 150, 155, 0.12)",
                   animation: "crisis-ring 2.8s ease-in-out infinite",
                 }}
               />
@@ -573,15 +576,14 @@ export default function ChautariRoom() {
                   height: 30,
                   borderRadius: "50%",
                   background:
-                    "linear-gradient(135deg, rgba(185,70,55,0.22), rgba(140,45,35,0.15))",
-                  border: "1px solid rgba(210,90,70,0.35)",
+                    "linear-gradient(145deg, rgba(255,170,175,0.28), rgba(200,100,110,0.22))",
+                  border: "1px solid rgba(255,190,185,0.32)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 14,
-                  color: "rgba(230,100,82,0.95)",
-                  boxShadow:
-                    "0 0 10px rgba(185,70,55,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+                  color: "rgba(255, 220, 218, 0.95)",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2)",
                   animation: "crisis-heartbeat 2.8s ease-in-out infinite",
                   position: "relative",
                 }}
@@ -590,17 +592,17 @@ export default function ChautariRoom() {
               </div>
             </div>
 
-            <div>
+            <div style={{ minWidth: 0 }}>
               <span
                 style={{
                   display: "block",
-                  fontSize: 13,
-                  color: "rgba(248,236,218,0.88)",
+                  fontSize: 14,
                   fontWeight: 500,
-                  letterSpacing: "0.005em",
-                  lineHeight: 1.2,
-                  fontFamily: "Georgia, 'Times New Roman', serif",
-                  fontStyle: "italic",
+                  letterSpacing: "0.015em",
+                  lineHeight: 1.35,
+                  color: "rgba(255, 250, 248, 0.96)",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.22)",
+                  fontFamily: "Inter, system-ui, sans-serif",
                 }}
               >
                 Need support right now?
@@ -608,97 +610,66 @@ export default function ChautariRoom() {
               <span
                 style={{
                   display: "block",
-                  fontSize: 9,
-                  color: "rgba(196,163,90,0.52)",
-                  letterSpacing: "0.1em",
-                  marginTop: 3.5,
-                  textTransform: "uppercase",
+                  fontSize: 11.5,
+                  fontWeight: 400,
+                  color: "rgba(255, 232, 228, 0.78)",
+                  marginTop: 3,
+                  lineHeight: 1.45,
                   fontFamily: "Inter, system-ui, sans-serif",
                 }}
               >
-                You are not alone · Someone will listen
+                TPO Nepal helpline · You are not alone
               </span>
             </div>
           </div>
 
-          {/* Right: layered call button */}
           <a
             href="tel:16600102005"
             className="crisis-call-btn"
+            aria-label="Call Helpline — TPO Nepal"
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 9,
-              padding: "8px 18px 8px 14px",
-              background:
-                "linear-gradient(135deg, rgba(196,163,90,0.13) 0%, rgba(160,128,60,0.08) 100%)",
-              border: "1px solid rgba(196,163,90,0.3)",
+              justifyContent: "center",
+              gap: 7,
+              padding: "9px 14px",
+              background: "linear-gradient(180deg, #6fdfaa 0%, #45c07f 100%)",
+              border: "1px solid rgba(255,255,255,0.35)",
               borderRadius: 999,
               textDecoration: "none",
               flexShrink: 0,
               boxShadow:
-                "0 2px 16px rgba(196,163,90,0.1), inset 0 1px 0 rgba(255,245,200,0.06)",
-              transition: "all 0.25s ease",
+                "0 3px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.45)",
+              transition: "transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease",
               position: "relative",
-              overflow: "hidden",
+              touchAction: "manipulation",
             }}
           >
-            {/* Shimmer layer */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(105deg, transparent 30%, rgba(255,245,200,0.04) 50%, transparent 70%)",
-                pointerEvents: "none",
-              }}
-            />
-            {/* Phone icon */}
             <svg
-              width={13}
-              height={13}
+              width={17}
+              height={17}
               viewBox="0 0 24 24"
               fill="none"
-              stroke="rgba(196,163,90,0.85)"
+              stroke="#ffffff"
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ flexShrink: 0, position: "relative" }}
+              aria-hidden
             >
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.45 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.57a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
             </svg>
             <span
               style={{
-                fontSize: 10,
-                color: "rgba(196,163,90,0.72)",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                fontWeight: 600,
-                fontFamily: "Inter, system-ui, sans-serif",
-                position: "relative",
-              }}
-            >
-              TPO Nepal
-            </span>
-            <span
-              style={{
-                width: 1,
-                height: 13,
-                background: "rgba(196,163,90,0.25)",
-                flexShrink: 0,
-              }}
-            />
-            <span
-              style={{
                 fontSize: 12.5,
-                color: "rgba(245,210,110,0.97)",
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-                fontFamily: "'Courier New', Courier, monospace",
-                position: "relative",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.98)",
+                letterSpacing: "0.03em",
+                fontFamily: "Inter, system-ui, sans-serif",
+                whiteSpace: "nowrap",
+                textShadow: "0 1px 1px rgba(0,0,0,0.12)",
               }}
             >
-              1660-0102005
+              Call Helpline
             </span>
           </a>
         </div>
@@ -706,20 +677,20 @@ export default function ChautariRoom() {
         <style>{`
           @keyframes crisis-heartbeat {
             0%, 100% { transform: scale(1); }
-            14%       { transform: scale(1.18); }
-            28%       { transform: scale(1); }
-            42%       { transform: scale(1.1); }
-            56%       { transform: scale(1); }
+            50%       { transform: scale(1.05); }
           }
           @keyframes crisis-ring {
             0%, 100% { opacity: 0; transform: scale(1); }
-            50%       { opacity: 1; transform: scale(1.55); }
+            50%       { opacity: 0.7; transform: scale(1.32); }
           }
           .crisis-call-btn:hover {
-            background: linear-gradient(135deg, rgba(196,163,90,0.22) 0%, rgba(160,128,60,0.16) 100%) !important;
-            border-color: rgba(196,163,90,0.52) !important;
-            box-shadow: 0 4px 24px rgba(196,163,90,0.2), inset 0 1px 0 rgba(255,245,200,0.08) !important;
+            filter: brightness(1.03);
             transform: translateY(-1px);
+            box-shadow: 0 5px 16px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+          }
+          .crisis-call-btn:active {
+            transform: translateY(0);
+            filter: brightness(0.96);
           }
         `}</style>
       </div>
