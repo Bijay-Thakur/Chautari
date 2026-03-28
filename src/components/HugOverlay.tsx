@@ -66,7 +66,7 @@ export function HugOverlay({ visible, kiteMessage, kiteOwnerName, onConnect, onD
               zIndex: 1,
             }}
           >
-            🤍
+            🤗
           </motion.div>
 
           {/* Text */}
@@ -86,7 +86,7 @@ export function HugOverlay({ visible, kiteMessage, kiteOwnerName, onConnect, onD
                 lineHeight: 1.4,
               }}
             >
-              Someone held your kite.
+              You sent a hug.
             </p>
             <p
               style={{

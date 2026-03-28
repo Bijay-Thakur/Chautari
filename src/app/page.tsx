@@ -279,16 +279,38 @@ function Label({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        fontSize: "0.72rem",
-        fontWeight: 500,
-        color: "rgba(196,163,90,0.6)",
-        letterSpacing: "0.1em",
+        fontSize: "0.8125rem",
+        fontWeight: 600,
+        color: "rgba(236,214,168,0.96)",
+        letterSpacing: "0.06em",
         textTransform: "uppercase",
-        marginBottom: "0.45rem",
+        marginBottom: "0.5rem",
+        textShadow: "0 1px 2px rgba(0,0,0,0.35)",
       }}
     >
       {children}
     </div>
+  );
+}
+
+function LabelHint({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      style={{
+        display: "block",
+        marginTop: "0.35rem",
+        marginBottom: "0.55rem",
+        fontSize: "0.75rem",
+        fontWeight: 400,
+        letterSpacing: "0.02em",
+        textTransform: "none",
+        color: "rgba(255,245,230,0.72)",
+        lineHeight: 1.45,
+        textShadow: "0 1px 2px rgba(0,0,0,0.25)",
+      }}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -297,10 +319,12 @@ const WarmInput = React.forwardRef<
   React.InputHTMLAttributes<HTMLInputElement>
 >(function WarmInput(props, ref) {
   const [focused, setFocused] = useState(false);
+  const { className, style: styleProp, ...rest } = props;
   return (
     <input
-      {...props}
+      {...rest}
       ref={ref}
+      className={`login-warm-input ${className ?? ""}`}
       onFocus={(e) => {
         setFocused(true);
         props.onFocus?.(e);
@@ -312,20 +336,23 @@ const WarmInput = React.forwardRef<
       style={{
         width: "100%",
         background: focused
-          ? "rgba(196,163,90,0.07)"
-          : "rgba(255,255,255,0.03)",
+          ? "rgba(0,0,0,0.38)"
+          : "rgba(0,0,0,0.28)",
         border: `1px solid ${
-          focused ? "rgba(196,163,90,0.38)" : "rgba(196,163,90,0.14)"
+          focused ? "rgba(212,184,120,0.55)" : "rgba(255,255,255,0.22)"
         }`,
-        borderRadius: "10px",
-        color: "rgba(244,232,216,0.9)",
-        fontSize: "0.9375rem",
-        padding: "0.72rem 1rem",
+        borderRadius: "12px",
+        color: "#faf6ef",
+        fontSize: "1rem",
+        padding: "0.8rem 1.05rem",
         outline: "none",
         fontFamily: "inherit",
-        transition: "border-color 0.18s, background 0.18s",
-        caretColor: "rgba(196,163,90,0.8)",
-        ...(props.style ?? {}),
+        transition: "border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease",
+        caretColor: "#e8d4a8",
+        boxShadow: focused
+          ? "0 0 0 3px rgba(196,163,90,0.18), inset 0 1px 0 rgba(255,255,255,0.04)"
+          : "inset 0 1px 2px rgba(0,0,0,0.2)",
+        ...(styleProp ?? {}),
       }}
     />
   );
@@ -388,7 +415,7 @@ function LoginForm({
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={loading}
-          placeholder=""
+          placeholder="Enter your username"
         />
       </div>
 
@@ -401,7 +428,7 @@ function LoginForm({
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
-          placeholder=""
+          placeholder="Enter your password"
         />
       </div>
 
@@ -414,11 +441,16 @@ function LoginForm({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             style={{
-              fontSize: "0.8125rem",
-              color: "rgba(220,100,80,0.9)",
+              fontSize: "0.875rem",
+              color: "#fecaca",
               marginBottom: "1rem",
-              lineHeight: 1.5,
+              lineHeight: 1.55,
               textAlign: "center",
+              textShadow: "0 1px 3px rgba(0,0,0,0.45)",
+              padding: "0.65rem 0.75rem",
+              background: "rgba(127,29,29,0.35)",
+              borderRadius: "10px",
+              border: "1px solid rgba(248,113,113,0.25)",
             }}
           >
             {error}
@@ -490,12 +522,8 @@ function RegisterForm({
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div style={{ marginBottom: "1rem" }}>
-        <Label>
-          Username{" "}
-          <span style={{ color: "rgba(196,163,90,0.38)", fontWeight: 400, letterSpacing: 0 }}>
-            · 3–30 chars, letters / numbers / _
-          </span>
-        </Label>
+        <Label>Username</Label>
+        <LabelHint>3–30 characters: letters, numbers, or underscore.</LabelHint>
         <WarmInput
           ref={ref}
           id="reg-username"
@@ -504,12 +532,13 @@ function RegisterForm({
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={loading}
-          placeholder=""
+          placeholder="Choose a username"
         />
       </div>
 
       <div style={{ marginBottom: "1rem" }}>
-        <Label>Password <span style={{ color: "rgba(196,163,90,0.38)", fontWeight: 400, letterSpacing: 0 }}>· min 6 chars</span></Label>
+        <Label>Password</Label>
+        <LabelHint>At least 6 characters.</LabelHint>
         <WarmInput
           id="reg-password"
           type="password"
@@ -517,16 +546,24 @@ function RegisterForm({
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
-          placeholder=""
+          placeholder="Create a password"
         />
       </div>
 
       <div style={{ marginBottom: "1.4rem" }}>
         <Label>
-          Confirm Password{" "}
+          Confirm password
           {passwordMismatch && (
-            <span style={{ color: "rgba(220,100,80,0.75)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>
-              · doesn't match
+            <span
+              style={{
+                color: "#fecaca",
+                fontWeight: 600,
+                letterSpacing: "0.02em",
+                textTransform: "none",
+                marginLeft: "0.35rem",
+              }}
+            >
+              — does not match
             </span>
           )}
         </Label>
@@ -537,10 +574,10 @@ function RegisterForm({
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           disabled={loading}
-          placeholder=""
+          placeholder="Re-enter your password"
           style={
             passwordMismatch
-              ? { borderColor: "rgba(220,100,80,0.4)" }
+              ? { borderColor: "rgba(248,113,113,0.55)" }
               : undefined
           }
         />
@@ -555,11 +592,16 @@ function RegisterForm({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             style={{
-              fontSize: "0.8125rem",
-              color: "rgba(220,100,80,0.9)",
+              fontSize: "0.875rem",
+              color: "#fecaca",
               marginBottom: "1rem",
-              lineHeight: 1.5,
+              lineHeight: 1.55,
               textAlign: "center",
+              textShadow: "0 1px 3px rgba(0,0,0,0.45)",
+              padding: "0.65rem 0.75rem",
+              background: "rgba(127,29,29,0.35)",
+              borderRadius: "10px",
+              border: "1px solid rgba(248,113,113,0.25)",
             }}
           >
             {error}
@@ -580,21 +622,23 @@ function SubmitButton({ loading, label }: { loading: boolean; label: string }) {
     <button
       type="submit"
       disabled={loading}
-      className="w-full font-semibold transition-opacity"
+      className="login-submit-btn w-full font-semibold"
       style={{
-        padding: "0.875rem 1rem",
-        borderRadius: "10px",
+        padding: "0.95rem 1rem",
+        borderRadius: "12px",
         border: "none",
         background: loading
-          ? "rgba(196,163,90,0.25)"
-          : "linear-gradient(135deg, #c4a35a 0%, #9a7b3c 100%)",
-        color: loading ? "rgba(196,163,90,0.5)" : "#1a1208",
-        fontSize: "0.9375rem",
+          ? "rgba(196,163,90,0.28)"
+          : "linear-gradient(135deg, #d4b46a 0%, #a6843a 100%)",
+        color: loading ? "rgba(40,32,18,0.45)" : "#1a1208",
+        fontSize: "1rem",
         fontWeight: 700,
-        letterSpacing: "0.02em",
+        letterSpacing: "0.03em",
         cursor: loading ? "not-allowed" : "pointer",
-        transition: "all 0.22s ease",
-        boxShadow: loading ? "none" : "0 6px 20px rgba(154,123,60,0.28)",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease",
+        boxShadow: loading
+          ? "none"
+          : "0 8px 24px rgba(0,0,0,0.35), 0 2px 0 rgba(255,255,255,0.2) inset",
       }}
     >
       {loading ? "Please wait…" : label}
@@ -652,6 +696,24 @@ export default function LoginPage() {
           .login-himalaya-leaves, .login-himalaya-leaves-right { animation: none; }
           .cloud-drift-a, .cloud-drift-b, .cloud-drift-c { animation: none; }
         }
+
+        .login-warm-input::placeholder {
+          color: rgba(255, 245, 230, 0.48);
+          font-weight: 400;
+        }
+        .login-warm-input:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+        }
+        .login-submit-btn:not(:disabled):hover {
+          filter: brightness(1.06);
+          transform: translateY(-1px);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 2px 0 rgba(255,255,255,0.25) inset;
+        }
+        .login-submit-btn:not(:disabled):active {
+          transform: translateY(0);
+        }
+        .login-tab-btn { transition: background 0.28s ease, color 0.28s ease, box-shadow 0.28s ease; }
       `}</style>
 
     <div
@@ -719,12 +781,12 @@ export default function LoginPage() {
           className="rounded-[24px]"
           style={{
             background:
-              "linear-gradient(165deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.07) 100%)",
-            border: "1px solid rgba(255,255,255,0.22)",
+              "linear-gradient(165deg, rgba(28,22,38,0.82) 0%, rgba(14,11,22,0.88) 55%, rgba(12,10,18,0.9) 100%)",
+            border: "1px solid rgba(255,255,255,0.16)",
             boxShadow:
-              "0 32px 64px -12px rgba(49,46,129,0.5), inset 0 1px 0 rgba(255,255,255,0.32)",
-            backdropFilter: "blur(28px)",
-            WebkitBackdropFilter: "blur(28px)",
+              "0 32px 64px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)",
+            backdropFilter: "blur(32px)",
+            WebkitBackdropFilter: "blur(32px)",
             padding: "clamp(2rem,5vw,2.75rem) clamp(1.75rem,5vw,2.5rem)",
           }}
         >
@@ -742,27 +804,28 @@ export default function LoginPage() {
             <h1
               className="font-display font-semibold"
               style={{
-                fontSize: "clamp(1.75rem, 5vw, 2.1rem)",
-                lineHeight: 1.05,
-                letterSpacing: "-0.03em",
-                color: "#fff",
-                textShadow: "0 2px 16px rgba(49,46,129,0.4)",
+                fontSize: "clamp(1.85rem, 5vw, 2.25rem)",
+                lineHeight: 1.08,
+                letterSpacing: "-0.02em",
+                color: "#fdfaf6",
+                textShadow: "0 2px 20px rgba(0,0,0,0.45), 0 1px 0 rgba(0,0,0,0.2)",
               }}
             >
               Chautari
             </h1>
 
-            <div style={{ marginTop: "0.6rem", marginBottom: "0.6rem" }}>
+            <div style={{ marginTop: "0.6rem", marginBottom: "0.65rem" }}>
               <Divider />
             </div>
 
             <p
               style={{
-                fontSize: "0.825rem",
-                color: "rgba(255,255,255,0.62)",
-                lineHeight: 1.7,
-                maxWidth: "22rem",
+                fontSize: "0.9375rem",
+                color: "rgba(255,248,240,0.9)",
+                lineHeight: 1.75,
+                maxWidth: "24rem",
                 margin: "0 auto",
+                textShadow: "0 1px 8px rgba(0,0,0,0.35)",
               }}
             >
               A quiet space to slow down, breathe, and be here for a while.
@@ -773,12 +836,12 @@ export default function LoginPage() {
           <div
             style={{
               display: "flex",
-              background: "rgba(255,255,255,0.025)",
-              border: "1px solid rgba(196,163,90,0.1)",
-              borderRadius: "12px",
-              padding: "3px",
-              marginBottom: "1.75rem",
-              gap: "3px",
+              background: "rgba(0,0,0,0.22)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: "14px",
+              padding: "4px",
+              marginBottom: "1.35rem",
+              gap: "4px",
             }}
           >
             {(["login", "register"] as Mode[]).map((m) => {
@@ -787,26 +850,26 @@ export default function LoginPage() {
                 <button
                   key={m}
                   type="button"
+                  className="login-tab-btn"
                   onClick={() => switchMode(m)}
                   style={{
                     flex: 1,
-                    padding: "0.55rem 0.5rem",
-                    borderRadius: "9px",
+                    padding: "0.62rem 0.5rem",
+                    borderRadius: "10px",
                     border: "none",
                     background: active
-                      ? "rgba(196,163,90,0.14)"
+                      ? "linear-gradient(180deg, rgba(196,163,90,0.28) 0%, rgba(154,123,60,0.18) 100%)"
                       : "transparent",
                     color: active
-                      ? "rgba(244,232,216,0.92)"
-                      : "rgba(196,163,90,0.4)",
-                    fontWeight: active ? 600 : 400,
-                    fontSize: "0.84rem",
+                      ? "#fdf6e8"
+                      : "rgba(255,245,230,0.72)",
+                    fontWeight: active ? 600 : 500,
+                    fontSize: "0.875rem",
                     cursor: "pointer",
-                    letterSpacing: "0.01em",
-                    transition: "all 0.2s ease",
+                    letterSpacing: "0.02em",
                     fontFamily: "inherit",
                     boxShadow: active
-                      ? "inset 0 1px 0 rgba(255,255,255,0.06)"
+                      ? "inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.2)"
                       : "none",
                   }}
                 >
@@ -816,14 +879,40 @@ export default function LoginPage() {
             })}
           </div>
 
+          <p
+            style={{
+              fontSize: "0.9375rem",
+              fontWeight: 600,
+              color: "rgba(255,252,248,0.96)",
+              marginBottom: "1.1rem",
+              letterSpacing: "0.01em",
+              textShadow: "0 1px 4px rgba(0,0,0,0.3)",
+            }}
+          >
+            {mode === "login" ? "Welcome back" : "Create your account"}
+          </p>
+          <p
+            style={{
+              fontSize: "0.8125rem",
+              color: "rgba(255,240,220,0.72)",
+              marginTop: "-0.65rem",
+              marginBottom: "1.25rem",
+              lineHeight: 1.5,
+            }}
+          >
+            {mode === "login"
+              ? "Enter your username and password below."
+              : "Fill in each field — we will keep your details safe."}
+          </p>
+
           {/* ── Animated form swap ── */}
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
-              initial={{ opacity: 0, x: mode === "login" ? -14 : 14 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: mode === "login" ? 14 : -14 }}
-              transition={{ duration: 0.22, ease: "easeInOut" }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
               {mode === "login" ? (
                 <LoginForm onSuccess={handleSuccess} />
@@ -836,11 +925,11 @@ export default function LoginPage() {
           {/* ── Mode hint ── */}
           <p
             style={{
-              fontSize: "0.75rem",
-              color: "rgba(255,255,255,0.45)",
+              fontSize: "0.8125rem",
+              color: "rgba(255,245,230,0.78)",
               textAlign: "center",
-              marginTop: "1.25rem",
-              lineHeight: 1.6,
+              marginTop: "1.35rem",
+              lineHeight: 1.65,
             }}
           >
             {mode === "login" ? (
@@ -852,13 +941,16 @@ export default function LoginPage() {
                   style={{
                     background: "none",
                     border: "none",
-                    color: "rgba(196,163,90,0.55)",
+                    color: "rgba(228,200,130,0.98)",
                     cursor: "pointer",
                     fontSize: "inherit",
                     fontFamily: "inherit",
+                    fontWeight: 600,
                     textDecoration: "underline",
-                    textUnderlineOffset: "2px",
+                    textDecorationColor: "rgba(228,200,130,0.45)",
+                    textUnderlineOffset: "3px",
                     padding: 0,
+                    transition: "color 0.2s ease",
                   }}
                 >
                   Create an account
@@ -873,12 +965,14 @@ export default function LoginPage() {
                   style={{
                     background: "none",
                     border: "none",
-                    color: "rgba(196,163,90,0.55)",
+                    color: "rgba(228,200,130,0.98)",
                     cursor: "pointer",
                     fontSize: "inherit",
                     fontFamily: "inherit",
+                    fontWeight: 600,
                     textDecoration: "underline",
-                    textUnderlineOffset: "2px",
+                    textDecorationColor: "rgba(228,200,130,0.45)",
+                    textUnderlineOffset: "3px",
                     padding: 0,
                   }}
                 >
@@ -891,12 +985,15 @@ export default function LoginPage() {
           {/* ── Footer ── */}
           <p
             style={{
-              fontSize: "10px",
-              color: "rgba(255,255,255,0.35)",
+              fontSize: "0.75rem",
+              color: "rgba(255,240,225,0.62)",
               textAlign: "center",
               marginTop: "1.5rem",
               lineHeight: 1.65,
-              letterSpacing: "0.02em",
+              letterSpacing: "0.01em",
+              maxWidth: "20rem",
+              marginLeft: "auto",
+              marginRight: "auto",
             }}
           >
             Your information is stored securely. Passwords are hashed and never

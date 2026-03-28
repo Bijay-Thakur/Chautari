@@ -35,7 +35,68 @@ export function FloatingKite({
   const [hovered, setHovered] = useState(false);
   const [held, setHeld] = useState(false);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerDownRef = useRef(false);
+  const longHoldRef = useRef(false);
+  const downAtRef = useRef(0);
   const isOwn = kite.user_id === currentUserId && !kite.isSeed;
+
+  const HOLD_MS = 220;
+  const TAP_MAX_MS = 380;
+
+  function clearHoldTimer() {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    pointerDownRef.current = true;
+    longHoldRef.current = false;
+    downAtRef.current = Date.now();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* capture may fail in edge cases */
+    }
+    clearHoldTimer();
+    holdTimerRef.current = setTimeout(() => {
+      longHoldRef.current = true;
+      setHeld(true);
+    }, HOLD_MS);
+  }
+
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+    clearHoldTimer();
+    setHeld(false);
+    const elapsed = Date.now() - downAtRef.current;
+    /* Own kite: hold only, no hug (others will hug later / in multiplayer) */
+    const shouldHug =
+      !isOwn &&
+      pointerDownRef.current &&
+      !longHoldRef.current &&
+      elapsed < TAP_MAX_MS;
+    pointerDownRef.current = false;
+    longHoldRef.current = false;
+    if (shouldHug) onHug(kite.id);
+  }
+
+  function handlePointerCancel(e: React.PointerEvent<HTMLDivElement>) {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    clearHoldTimer();
+    setHeld(false);
+    pointerDownRef.current = false;
+    longHoldRef.current = false;
+  }
   const colorEntry = KITE_COLORS.find((c) => c.fill === kite.color) ?? KITE_COLORS[0];
 
   /*
@@ -64,7 +125,7 @@ export function FloatingKite({
         position: "absolute",
         left: `${kite.position_x}%`,
         top: `${kite.position_y}%`,
-        zIndex: hovered ? 20 : 10,
+        zIndex: hovered || held ? 25 : 10,
         /* Needed so the ambient glow blob positions relative to this div */
         isolation: "isolate",
       }}
@@ -95,8 +156,9 @@ export function FloatingKite({
       {/* ── Inner: continuous floating motion + hover glow ── */}
       <motion.div
         style={{
-          cursor: isOwn ? "default" : held ? "grabbing" : "grab",
+          cursor: held ? "grabbing" : "grab",
           userSelect: "none",
+          touchAction: "none",
           filter: hovered || held ? glowHovered : glowResting,
           transition: "filter 0.32s ease",
         }}
@@ -124,21 +186,11 @@ export function FloatingKite({
         onHoverStart={() => setHovered(true)}
         onHoverEnd={() => {
           setHovered(false);
-          if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-          setHeld(false);
+          /* Do not clear hold here — hover can flicker while pointer is still down */
         }}
-        onPointerDown={() => {
-          holdTimerRef.current = setTimeout(() => setHeld(true), 160);
-        }}
-        onPointerUp={() => {
-          if (holdTimerRef.current) {
-            clearTimeout(holdTimerRef.current);
-            holdTimerRef.current = null;
-          }
-          setHeld(false);
-        }}
-        onClick={() => { if (!isOwn) onHug(kite.id); }}
-        onTap={() => { if (!isOwn) onHug(kite.id); }}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       >
         <KiteSVG color={kite.color} tailColor={colorEntry.tail} size={88} />
 
@@ -186,7 +238,7 @@ export function FloatingKite({
                 "0 2px 8px rgba(0,0,0,0.55), 0 0 10px rgba(245,166,35,0.45)",
             }}
           >
-            {kite.hug_count}🤍
+            {kite.hug_count}🤗
           </div>
         )}
 
@@ -214,9 +266,9 @@ export function FloatingKite({
           </div>
         )}
 
-        {/* ── Hover tooltip ── */}
+        {/* ── Hover tooltip (own = hold only; others = hold + hug) ── */}
         <AnimatePresence>
-          {hovered && !isOwn && (
+          {hovered && (
             <motion.div
               initial={{ opacity: 0, y: 8, scale: 0.94 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -240,7 +292,6 @@ export function FloatingKite({
                 boxShadow: `0 4px 24px rgba(0,0,0,0.6), 0 0 16px ${colorEntry.glow.replace(/[\d.]+\)$/, "0.2)")}`,
               }}
             >
-              {/* Coloured accent line at top */}
               <div
                 style={{
                   height: 2,
@@ -269,7 +320,11 @@ export function FloatingKite({
                   letterSpacing: "0.04em",
                 }}
               >
-                tap to send a hug ✦
+                {isOwn ? (
+                  <>Your kite — press and hold to steady it ✦</>
+                ) : (
+                  <>Hold to steady · tap to send a hug ✦</>
+                )}
               </p>
             </motion.div>
           )}
