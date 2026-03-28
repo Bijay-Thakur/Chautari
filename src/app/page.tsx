@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -364,13 +364,120 @@ function EnterButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+/* ─── Mute toggle button ─────────────────────────────────────────────── */
+function MuteButton({ muted, onToggle }: { muted: boolean; onToggle: () => void }) {
+  return (
+    <motion.button
+      onClick={onToggle}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 2.2, duration: 0.6 }}
+      title={muted ? "Unmute ambient sound" : "Mute ambient sound"}
+      style={{
+        position: "fixed",
+        bottom: 80,          // sit above the crisis bar
+        right: 18,
+        zIndex: 20,
+        width: 36,
+        height: 36,
+        borderRadius: "50%",
+        background: "rgba(10, 6, 2, 0.58)",
+        border: "1px solid rgba(255, 210, 150, 0.25)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        color: "rgba(255, 225, 175, 0.85)",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+      }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.92 }}
+    >
+      {muted ? (
+        /* muted icon */
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <line x1="23" y1="9" x2="17" y2="15" />
+          <line x1="17" y1="9" x2="23" y2="15" />
+        </svg>
+      ) : (
+        /* sound-on icon */
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+        </svg>
+      )}
+    </motion.button>
+  );
+}
+
 /* ─── Main Page ──────────────────────────────────────────────────────── */
 export default function LandingPage() {
   const router = useRouter();
   const [entered, setEntered] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  /* ── Start ambient audio on mount ── */
+  useEffect(() => {
+    const audio = new Audio("/audio/Sound.mpeg");
+    audio.loop = true;
+    audio.volume = 0.38;       // medium — not too loud
+    audioRef.current = audio;
+
+    /* Try immediate autoplay; browsers may block until first interaction */
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        /* Autoplay blocked — play on the first user gesture */
+        const unlock = () => {
+          audio.play().catch(() => {});
+          window.removeEventListener("pointerdown", unlock);
+          window.removeEventListener("keydown", unlock);
+        };
+        window.addEventListener("pointerdown", unlock, { once: true });
+        window.addEventListener("keydown", unlock, { once: true });
+      });
+    }
+
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
+
+  /* ── Mute / unmute ── */
+  const toggleMute = useCallback(() => {
+    if (!audioRef.current) return;
+    const next = !muted;
+    audioRef.current.muted = next;
+    setMuted(next);
+  }, [muted]);
+
+  /* ── Fade out then navigate ── */
   function handleEnter() {
     setEntered(true);
+
+    /* Fade volume down over 600 ms then stop */
+    const audio = audioRef.current;
+    if (audio) {
+      const steps = 20;
+      const interval = 600 / steps;
+      const startVol = audio.volume;
+      let step = 0;
+      const fade = setInterval(() => {
+        step++;
+        audio.volume = Math.max(0, startVol * (1 - step / steps));
+        if (step >= steps) {
+          clearInterval(fade);
+          audio.pause();
+        }
+      }, interval);
+    }
+
     setTimeout(() => router.push("/home"), 700);
   }
 
@@ -411,6 +518,9 @@ export default function LandingPage() {
       <AnimatedBirds />
       <LightPulses />
       <FireParticles />
+
+      {/* ── Mute toggle ── */}
+      <MuteButton muted={muted} onToggle={toggleMute} />
 
       {/* ── Content — right side, no card, text floats directly over image ── */}
       <AnimatePresence>
