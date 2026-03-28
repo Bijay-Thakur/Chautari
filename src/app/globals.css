@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-night: #1a0a00;
+  --color-amber: #d97706;
+  --color-cream: #fdf6ec;
+  --color-forest: #0d2b1a;
+  --color-chain-iron: #4a5568;
+  --color-chain-gold: #f6c90e;
+  --font-nepali: 'Noto Sans Devanagari', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-nepali), system-ui, sans-serif;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+@keyframes kite-float {
+  0%, 100% { transform: translateX(0) rotate(-5deg); }
+  50% { transform: translateX(12px) rotate(5deg); }
+}
+
+@keyframes chain-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; filter: drop-shadow(0 0 8px #d97706); }
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--duration, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+.kite-float {
+  animation: kite-float 3s ease-in-out infinite;
+}
+
+.chain-pulse {
+  animation: chain-pulse 2s ease-in-out infinite;
+}
+
+/* Nepali text slightly larger */
+.ne {
+  font-family: var(--font-nepali), sans-serif;
+  font-size: 1.05em;
+  line-height: 1.7;
+}
