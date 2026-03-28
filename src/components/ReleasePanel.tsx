@@ -49,21 +49,21 @@ export function ReleasePanel({ onRelease, isReleasing }: Props) {
           >
             <p
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 600,
-                color: "rgba(245,166,35,0.9)",
-                letterSpacing: "1.5px",
+                color: "rgba(255, 210, 150, 0.95)",
+                letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                marginBottom: 6,
+                marginBottom: 8,
               }}
             >
               Release a kite
             </p>
             <p
               style={{
-                fontSize: 11,
-                color: "rgba(255,255,255,0.26)",
-                lineHeight: 1.65,
+                fontSize: 13,
+                color: "rgba(255, 245, 235, 0.78)",
+                lineHeight: 1.6,
                 marginBottom: 14,
               }}
             >
@@ -80,8 +80,8 @@ export function ReleasePanel({ onRelease, isReleasing }: Props) {
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.09)",
                 borderRadius: 8,
-                color: "rgba(255,255,255,0.85)",
-                fontSize: 12,
+                color: "rgba(255, 252, 248, 0.94)",
+                fontSize: 13,
                 fontFamily: "Inter, system-ui, sans-serif",
                 padding: "10px 12px",
                 resize: "none",
@@ -95,8 +95,8 @@ export function ReleasePanel({ onRelease, isReleasing }: Props) {
             />
             <div
               style={{
-                fontSize: 9,
-                color: "rgba(255,255,255,0.14)",
+                fontSize: 11,
+                color: "rgba(255, 230, 210, 0.45)",
                 textAlign: "right",
                 marginTop: 4,
               }}

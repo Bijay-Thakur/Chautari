@@ -11,6 +11,7 @@ import { generateAnonName } from "@/lib/anonName";
 import { generateKiteMotion, KITE_COLORS } from "@/lib/kitePhysics";
 import { seedKites } from "@/data/seedKites";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { playKiteHushSound } from "@/lib/kiteFlySound";
 
 /* ─── Stars (deterministic to avoid hydration mismatch) ───────────────── */
 const STARS = Array.from({ length: 40 }, (_, i) => ({
@@ -257,8 +258,8 @@ export default function ChautariRoom() {
     kiteMotions.current[optId] = generateKiteMotion();
     setKites((prev) => [...prev, optKite]);
     setNewKiteIds((prev) => new Set([...prev, optId]));
-        // Clear "Flying…" — kite is visually in the sky already
-        setIsReleasing(false);
+    playKiteHushSound();
+    setIsReleasing(false);
 
     /* ── Step 2: Persist to DB (needs roomId) ── */
     if (!roomId) return;
@@ -349,9 +350,10 @@ export default function ChautariRoom() {
           zIndex: 20,
           fontFamily: "Georgia, 'Times New Roman', serif",
           fontStyle: "italic",
-          fontSize: 18,
-          color: "rgba(245,166,35,0.72)",
-          letterSpacing: "0.01em",
+          fontSize: 20,
+          color: "rgba(255, 210, 150, 0.9)",
+          letterSpacing: "0.02em",
+          textShadow: "0 1px 3px rgba(0,0,0,0.35)",
         }}
       >
         Chautari
@@ -395,9 +397,9 @@ export default function ChautariRoom() {
         </div>
         <span
           style={{
-            fontSize: 10,
-            color: "rgba(255,255,255,0.2)",
-            letterSpacing: "0.03em",
+            fontSize: 12,
+            color: "rgba(255, 235, 220, 0.55)",
+            letterSpacing: "0.04em",
           }}
         >
           5 in this room
@@ -412,8 +414,8 @@ export default function ChautariRoom() {
           top: 18,
           right: 20,
           zIndex: 20,
-          fontSize: 11,
-          color: "rgba(255,255,255,0.18)",
+          fontSize: 13,
+          color: "rgba(255, 220, 190, 0.65)",
           textDecoration: "none",
           letterSpacing: "0.04em",
         }}

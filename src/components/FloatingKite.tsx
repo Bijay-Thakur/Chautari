@@ -1,9 +1,14 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { KiteSVG } from "./KiteSVG";
 import { KITE_COLORS, generateKiteMotion } from "@/lib/kitePhysics";
+
+/** Larger kite body; text and overlays scale with this */
+const KITE_SIZE = 122;
+const DRAG_THRESHOLD_PX = 8;
+const DRAG_THRESHOLD_SQ = DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX;
 
 export type KiteData = {
   id: string;
@@ -25,6 +30,14 @@ type Props = {
   isNew?: boolean;
 };
 
+type DragStart = {
+  startX: number;
+  startY: number;
+  origX: number;
+  origY: number;
+  thresholdPassed: boolean;
+};
+
 export function FloatingKite({
   kite,
   currentUserId,
@@ -34,55 +47,112 @@ export function FloatingKite({
 }: Props) {
   const [hovered, setHovered] = useState(false);
   const [held, setHeld] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerDownRef = useRef(false);
   const longHoldRef = useRef(false);
   const downAtRef = useRef(0);
+  const dragStartRef = useRef<DragStart | null>(null);
+
   const isOwn = kite.user_id === currentUserId && !kite.isSeed;
 
   const HOLD_MS = 220;
   const TAP_MAX_MS = 380;
 
-  function clearHoldTimer() {
+  const clearHoldTimer = useCallback(() => {
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
     }
-  }
+  }, []);
+
+  const colorEntry = KITE_COLORS.find((c) => c.fill === kite.color) ?? KITE_COLORS[0];
+
+  const glowResting = [
+    `drop-shadow(0 0  8px ${colorEntry.glow})`,
+    `drop-shadow(0 0 24px ${colorEntry.glow})`,
+  ].join(" ");
+
+  const glowHovered = [
+    `drop-shadow(0 0 12px ${colorEntry.glow})`,
+    `drop-shadow(0 0 32px ${colorEntry.glow})`,
+    `drop-shadow(0 0 58px ${colorEntry.glow})`,
+  ].join(" ");
+
+  const physicsPaused = held || isDragging;
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     pointerDownRef.current = true;
     longHoldRef.current = false;
     downAtRef.current = Date.now();
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: dragOffset.x,
+      origY: dragOffset.y,
+      thresholdPassed: false,
+    };
+
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
-      /* capture may fail in edge cases */
+      /* noop */
     }
+
     clearHoldTimer();
     holdTimerRef.current = setTimeout(() => {
+      if (dragStartRef.current?.thresholdPassed) return;
       longHoldRef.current = true;
       setHeld(true);
     }, HOLD_MS);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const d = dragStartRef.current;
+    if (!pointerDownRef.current || !d) return;
+
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+
+    if (!d.thresholdPassed) {
+      if (dx * dx + dy * dy < DRAG_THRESHOLD_SQ) return;
+      d.thresholdPassed = true;
+      clearHoldTimer();
+      longHoldRef.current = false;
+      setHeld(false);
+      setIsDragging(true);
+    }
+
+    setDragOffset({ x: d.origX + dx, y: d.origY + dy });
   }
 
   function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {
-      /* already released */
+      /* noop */
     }
+
+    const dragged = dragStartRef.current?.thresholdPassed ?? false;
+    dragStartRef.current = null;
+
     clearHoldTimer();
     setHeld(false);
+    setIsDragging(false);
+
     const elapsed = Date.now() - downAtRef.current;
-    /* Own kite: hold only, no hug (others will hug later / in multiplayer) */
     const shouldHug =
       !isOwn &&
       pointerDownRef.current &&
       !longHoldRef.current &&
+      !dragged &&
       elapsed < TAP_MAX_MS;
+
     pointerDownRef.current = false;
     longHoldRef.current = false;
+
     if (shouldHug) onHug(kite.id);
   }
 
@@ -92,41 +162,25 @@ export function FloatingKite({
     } catch {
       /* noop */
     }
+    dragStartRef.current = null;
     clearHoldTimer();
     setHeld(false);
+    setIsDragging(false);
     pointerDownRef.current = false;
     longHoldRef.current = false;
   }
-  const colorEntry = KITE_COLORS.find((c) => c.fill === kite.color) ?? KITE_COLORS[0];
 
-  /*
-    Three-tier glow system:
-      resting  — soft ambient halo (two drop-shadow layers)
-      hovered  — bright, dramatic bloom (three layers, bigger radius)
-    The CSS `transition` on the inner div handles the smooth change
-    because Framer Motion is NOT animating `filter`, so the browser's
-    own transition engine takes over cleanly.
-  */
-  const glowResting = [
-    `drop-shadow(0 0  6px ${colorEntry.glow})`,
-    `drop-shadow(0 0 20px ${colorEntry.glow})`,
-  ].join(" ");
-
-  const glowHovered = [
-    `drop-shadow(0 0 10px ${colorEntry.glow})`,
-    `drop-shadow(0 0 28px ${colorEntry.glow})`,
-    `drop-shadow(0 0 55px ${colorEntry.glow})`,
-  ].join(" ");
+  const msgWidth = Math.round(KITE_SIZE * 0.72);
+  const msgFontPx = Math.round(KITE_SIZE * 0.095);
+  const msgMaxH = Math.round(KITE_SIZE * 0.52);
 
   return (
-    /* ── Outer: position on sky + entrance animation ── */
     <motion.div
       style={{
         position: "absolute",
         left: `${kite.position_x}%`,
         top: `${kite.position_y}%`,
-        zIndex: hovered || held ? 25 : 10,
-        /* Needed so the ambient glow blob positions relative to this div */
+        zIndex: hovered || held || isDragging ? 25 : 10,
         isolation: "isolate",
       }}
       initial={isNew ? { y: 90, opacity: 0, scale: 0.55 } : { opacity: 0 }}
@@ -137,199 +191,200 @@ export function FloatingKite({
           : { duration: 0.45, ease: "easeOut" }
       }
     >
-      {/* ── Ambient glow blob behind the kite (pulsing, separate layer) ── */}
-      <motion.div
-        aria-hidden
+      <div
         style={{
-          position: "absolute",
-          inset: "-28px",
-          borderRadius: "50%",
-          background: `radial-gradient(ellipse at center, ${colorEntry.glow}, transparent 72%)`,
-          filter: "blur(14px)",
-          pointerEvents: "none",
-          zIndex: -1,
+          transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+          willChange: isDragging ? "transform" : "auto",
         }}
-        animate={{ opacity: [0.55, 0.85, 0.55] }}
-        transition={{ duration: 3.6 + Math.random() * 2, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      {/* ── Inner: continuous floating motion + hover glow ── */}
-      <motion.div
-        style={{
-          cursor: held ? "grabbing" : "grab",
-          userSelect: "none",
-          touchAction: "none",
-          filter: hovered || held ? glowHovered : glowResting,
-          transition: "filter 0.32s ease",
-        }}
-        animate={
-          held
-            ? { rotate: 0, x: 0, y: 0, scale: 1.07 }
-            : {
-                rotate: motionProps.rotate,
-                x: motionProps.x,
-                y: motionProps.y,
-                scale: 1,
-              }
-        }
-        transition={
-          held
-            ? { duration: 0.28, ease: "easeOut" }
-            : {
-                duration: motionProps.duration,
-                delay: motionProps.delay,
-                repeat: Infinity,
-                repeatType: "mirror",
-                ease: "easeInOut",
-              }
-        }
-        onHoverStart={() => setHovered(true)}
-        onHoverEnd={() => {
-          setHovered(false);
-          /* Do not clear hold here — hover can flicker while pointer is still down */
-        }}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
       >
-        <KiteSVG color={kite.color} tailColor={colorEntry.tail} size={88} />
-
-        {/* ── Message — word-wrapped inside the kite body ── */}
-        <div
+        <motion.div
+          aria-hidden
           style={{
             position: "absolute",
-            top: "42%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            fontSize: 8.5,
-            color: "rgba(255,255,255,0.94)",
-            textAlign: "center",
-            width: 62,
-            lineHeight: 1.52,
-            maxHeight: 46,
-            overflow: "hidden",
+            inset: `${-Math.round(KITE_SIZE * 0.26)}px`,
+            borderRadius: "50%",
+            background: `radial-gradient(ellipse at center, ${colorEntry.glow}, transparent 72%)`,
+            filter: "blur(14px)",
             pointerEvents: "none",
-            textShadow: "0 1px 8px rgba(0,0,0,1), 0 0 2px rgba(0,0,0,0.9)",
-            fontFamily: "Inter, system-ui, sans-serif",
-            fontWeight: 600,
-            wordBreak: "break-word",
+            zIndex: -1,
           }}
+          animate={{ opacity: [0.55, 0.85, 0.55] }}
+          transition={{ duration: 3.6 + Math.random() * 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        <motion.div
+          style={{
+            cursor: isDragging ? "grabbing" : held ? "grabbing" : "grab",
+            userSelect: "none",
+            touchAction: "none",
+            filter: hovered || held || isDragging ? glowHovered : glowResting,
+            transition: "filter 0.32s ease",
+          }}
+          animate={
+            physicsPaused
+              ? { rotate: isDragging ? 0 : held ? -4 : 0, x: 0, y: 0, scale: held && !isDragging ? 1.07 : isDragging ? 1.04 : 1 }
+              : {
+                  rotate: motionProps.rotate,
+                  x: motionProps.x,
+                  y: motionProps.y,
+                  scale: 1,
+                }
+          }
+          transition={
+            physicsPaused
+              ? { duration: 0.22, ease: "easeOut" }
+              : {
+                  duration: motionProps.duration,
+                  delay: motionProps.delay,
+                  repeat: Infinity,
+                  repeatType: "mirror",
+                  ease: "easeInOut",
+                }
+          }
+          onHoverStart={() => setHovered(true)}
+          onHoverEnd={() => setHovered(false)}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
         >
-          {kite.message}
-        </div>
+          <KiteSVG color={kite.color} tailColor={colorEntry.tail} size={KITE_SIZE} />
 
-        {/* ── Hug count badge ── */}
-        {kite.hug_count > 0 && (
           <div
             style={{
               position: "absolute",
-              top: -10,
-              right: -12,
-              background: "rgba(245,166,35,0.95)",
-              color: "#07090f",
-              fontSize: 8,
-              fontWeight: 700,
-              borderRadius: "999px",
-              padding: "2px 6px",
+              top: "42%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              fontSize: msgFontPx,
+              color: "rgba(255, 252, 245, 0.98)",
+              textAlign: "center",
+              width: msgWidth,
+              lineHeight: 1.5,
+              maxHeight: msgMaxH,
+              overflow: "hidden",
               pointerEvents: "none",
+              textShadow:
+                "0 0 1px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.95), 0 2px 12px rgba(0,0,0,0.85)",
               fontFamily: "Inter, system-ui, sans-serif",
-              lineHeight: 1.35,
-              boxShadow:
-                "0 2px 8px rgba(0,0,0,0.55), 0 0 10px rgba(245,166,35,0.45)",
+              fontWeight: 600,
+              wordBreak: "break-word",
+              WebkitFontSmoothing: "antialiased",
             }}
           >
-            {kite.hug_count}🤗
+            {kite.message}
           </div>
-        )}
 
-        {/* ── Owner indicator dot ── */}
-        {isOwn && (
-          <div
-            style={{
-              position: "absolute",
-              top: -8,
-              left: -8,
-              width: 15,
-              height: 15,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 7,
-              pointerEvents: "none",
-              boxShadow: "0 0 6px rgba(255,255,255,0.2)",
-            }}
-          >
-            ✦
-          </div>
-        )}
-
-        {/* ── Hover tooltip (own = hold only; others = hold + hug) ── */}
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.94 }}
-              transition={{ duration: 0.18 }}
+          {kite.hug_count > 0 && (
+            <div
               style={{
                 position: "absolute",
-                bottom: -68,
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: 170,
-                background: "rgba(8,11,20,0.96)",
-                border: `1px solid ${colorEntry.glow.replace(/[\d.]+\)$/, "0.35)")}`,
-                borderRadius: 10,
-                padding: "9px 12px",
+                top: -12,
+                right: -14,
+                background: "rgba(245,166,35,0.95)",
+                color: "#07090f",
+                fontSize: 10,
+                fontWeight: 700,
+                borderRadius: "999px",
+                padding: "3px 7px",
                 pointerEvents: "none",
                 fontFamily: "Inter, system-ui, sans-serif",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                zIndex: 30,
-                boxShadow: `0 4px 24px rgba(0,0,0,0.6), 0 0 16px ${colorEntry.glow.replace(/[\d.]+\)$/, "0.2)")}`,
+                lineHeight: 1.35,
+                boxShadow:
+                  "0 2px 8px rgba(0,0,0,0.55), 0 0 10px rgba(245,166,35,0.45)",
               }}
             >
-              <div
-                style={{
-                  height: 2,
-                  borderRadius: 1,
-                  background: `linear-gradient(90deg, ${colorEntry.tail}, transparent)`,
-                  marginBottom: 7,
-                  opacity: 0.7,
-                }}
-              />
-              <p
-                style={{
-                  fontSize: 10,
-                  color: "rgba(255,255,255,0.8)",
-                  lineHeight: 1.55,
-                  marginBottom: 6,
-                  fontStyle: "italic",
-                }}
-              >
-                &ldquo;{kite.message}&rdquo;
-              </p>
-              <p
-                style={{
-                  fontSize: 9,
-                  color: colorEntry.tail,
-                  opacity: 0.75,
-                  letterSpacing: "0.04em",
-                }}
-              >
-                {isOwn ? (
-                  <>Your kite — press and hold to steady it ✦</>
-                ) : (
-                  <>Hold to steady · tap to send a hug ✦</>
-                )}
-              </p>
-            </motion.div>
+              {kite.hug_count}🤗
+            </div>
           )}
-        </AnimatePresence>
-      </motion.div>
+
+          {isOwn && (
+            <div
+              style={{
+                position: "absolute",
+                top: -10,
+                left: -10,
+                width: 17,
+                height: 17,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.14)",
+                border: "1px solid rgba(255,255,255,0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 8,
+                pointerEvents: "none",
+                boxShadow: "0 0 6px rgba(255,255,255,0.2)",
+              }}
+            >
+              ✦
+            </div>
+          )}
+
+          <AnimatePresence>
+            {hovered && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.94 }}
+                transition={{ duration: 0.18 }}
+                style={{
+                  position: "absolute",
+                  bottom: -76,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 188,
+                  background: "rgba(14, 18, 28, 0.97)",
+                  border: `1px solid ${colorEntry.glow.replace(/[\d.]+\)$/, "0.4)")}`,
+                  borderRadius: 12,
+                  padding: "11px 14px",
+                  pointerEvents: "none",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  zIndex: 30,
+                  boxShadow: `0 6px 28px rgba(0,0,0,0.55), 0 0 16px ${colorEntry.glow.replace(/[\d.]+\)$/, "0.18)")}`,
+                }}
+              >
+                <div
+                  style={{
+                    height: 2,
+                    borderRadius: 1,
+                    background: `linear-gradient(90deg, ${colorEntry.tail}, transparent)`,
+                    marginBottom: 8,
+                    opacity: 0.75,
+                  }}
+                />
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "rgba(255, 255, 255, 0.92)",
+                    lineHeight: 1.55,
+                    marginBottom: 8,
+                    fontStyle: "italic",
+                  }}
+                >
+                  &ldquo;{kite.message}&rdquo;
+                </p>
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: "rgba(255, 235, 210, 0.88)",
+                    letterSpacing: "0.02em",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {isOwn ? (
+                    <>Drag to move · Hold to steady your kite</>
+                  ) : (
+                    <>Drag to move · Hold to steady · Quick tap for a hug</>
+                  )}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
     </motion.div>
   );
 }

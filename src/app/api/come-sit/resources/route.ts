@@ -127,12 +127,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ...STATIC_FALLBACK[bucket],
       source: "fallback",
-      notice:
-        "No AI keys configured — showing built-in guidance. Add GEMINI_API_KEY and/or OPENAI_API_KEY for personalized suggestions.",
     });
   }
-
-  const notices: string[] = [];
 
   if (geminiKey) {
     const g = await tryGeminiResources(bucket, ctx, geminiKey);
@@ -143,7 +139,6 @@ export async function POST(req: Request) {
         model: g.model,
       });
     }
-    notices.push(`Gemini: ${g.reason}`);
   }
 
   if (openaiKey) {
@@ -152,18 +147,12 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ...o.payload,
         source: "openai",
-        notice:
-          notices.length > 0
-            ? `Used OpenAI because Gemini was unavailable (${notices[0]?.slice(0, 120)}).`
-            : undefined,
       });
     }
-    notices.push(`OpenAI: ${o.reason}`);
   }
 
   return NextResponse.json({
     ...STATIC_FALLBACK[bucket],
     source: "fallback",
-    notice: notices.length ? notices.join(" · ") : "AI services unavailable.",
   });
 }

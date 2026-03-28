@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Loader2, Mic, MicOff, Sparkles, Volume2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Loader2, Mic, MicOff, Sparkles, Volume2 } from "lucide-react";
 import type { MentalHealthBucket } from "@/data/comeSitConfig";
 import {
   BUCKET_DISPLAY,
@@ -11,7 +11,6 @@ import {
   BUCKET_WARM_HIGHLIGHT,
   researchLinkForBucket,
 } from "@/data/comeSitConfig";
-import CuratedResearchList from "@/components/come-sit/CuratedResearchList";
 import {
   createSpeechRecognition,
   isBrowserSpeechSupported,
@@ -27,7 +26,6 @@ type ResourcesState = {
   ways: ResourceWay[];
   learnMoreSummary: string;
   source?: string;
-  notice?: string;
 };
 
 const BUCKET_ACCENT: Record<
@@ -80,7 +78,6 @@ export default function ComeSitFlow() {
   const [showSolutions, setShowSolutions] = useState(false);
   const [resources, setResources] = useState<ResourcesState | null>(null);
   const [resLoading, setResLoading] = useState(false);
-  const [resNotice, setResNotice] = useState<string | null>(null);
 
   const streamRef = useRef<MediaStream | null>(null);
   const recRef = useRef<MediaRecorder | null>(null);
@@ -275,7 +272,6 @@ export default function ComeSitFlow() {
 
   const fetchResources = useCallback(async (b: MentalHealthBucket, context: string) => {
     setResLoading(true);
-    setResNotice(null);
     try {
       const res = await fetch("/api/come-sit/resources", {
         method: "POST",
@@ -288,10 +284,8 @@ export default function ComeSitFlow() {
         learnMoreSummary: String(data.learnMoreSummary ?? ""),
         source: data.source,
       });
-      if (data.notice) setResNotice(String(data.notice));
     } catch {
       setResources(null);
-      setResNotice("Could not load suggestions. You can still use the research link below.");
     } finally {
       setResLoading(false);
     }
@@ -343,7 +337,6 @@ export default function ComeSitFlow() {
     setHowItAffects("");
     setShowSolutions(false);
     setResources(null);
-    setResNotice(null);
     setError(null);
     if (videoRef.current) {
       videoRef.current.pause();
@@ -758,22 +751,9 @@ export default function ComeSitFlow() {
                 </ul>
               )}
 
-              {resNotice && (
-                <p
-                  className="text-xs mb-4 px-3 py-2.5 rounded-xl"
-                  style={{
-                    color: "rgba(255, 220, 190, 0.88)",
-                    background: "rgba(255, 190, 120, 0.1)",
-                    border: "1px solid rgba(255, 200, 150, 0.22)",
-                  }}
-                >
-                  {resNotice}
-                </p>
-              )}
-
               {resources?.learnMoreSummary && !resLoading && (
                 <p
-                  className="text-sm mb-8 leading-relaxed px-3 py-3 rounded-xl italic"
+                  className="text-sm mb-6 leading-relaxed px-3 py-3 rounded-xl italic"
                   style={{
                     color: "rgba(255, 225, 195, 0.88)",
                     background: "rgba(255, 240, 220, 0.05)",
@@ -785,42 +765,33 @@ export default function ComeSitFlow() {
               )}
 
               <div
-                className="relative mb-6 pt-2"
-                style={{
-                  borderTop: "1px solid rgba(255, 200, 160, 0.15)",
-                }}
+                className="mb-2 pt-4"
+                style={{ borderTop: "1px solid rgba(255, 200, 160, 0.12)" }}
               >
                 <p
-                  className="text-[0.65rem] font-bold uppercase tracking-[0.28em] mb-1"
-                  style={{ color: "rgba(255, 200, 150, 0.65)" }}
+                  className="text-[0.65rem] font-bold uppercase tracking-[0.24em] mb-3 text-center"
+                  style={{ color: "rgba(255, 200, 150, 0.55)" }}
                 >
-                  Go deeper when you&apos;re ready
+                  When you want more context
                 </p>
-                <h4
-                  className="font-display text-lg sm:text-xl mb-1"
-                  style={{ color: "#fff5e6" }}
+                <Link
+                  href={researchLinkForBucket(bucket)}
+                  onClick={() => setShowSolutions(false)}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold text-sm transition-all hover:brightness-110 hover:scale-[1.01] active:scale-[0.99]"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(255, 210, 165, 0.42) 0%, rgba(200, 150, 90, 0.5) 100%)",
+                    border: "1px solid rgba(255, 235, 200, 0.55)",
+                    color: "#2a1810",
+                    boxShadow: "0 8px 28px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.4)",
+                  }}
                 >
-                  Research &amp; case study resources
-                </h4>
-                <p className="text-xs sm:text-sm leading-relaxed mb-5" style={{ color: "rgba(255, 220, 195, 0.78)" }}>
-                  Scholarly articles, clinical case reports, and lived-experience stories — outside links
-                  open in a new tab.
+                  <BookOpen className="w-4 h-4 shrink-0 opacity-90" aria-hidden />
+                  Learn more about the topic
+                </Link>
+                <p className="text-center text-[0.7rem] mt-2.5 leading-relaxed" style={{ color: "rgba(255, 210, 180, 0.45)" }}>
+                  Opens the research &amp; resources page — articles, cases, and stories.
                 </p>
-                <CuratedResearchList highlightBucket={bucket} compact />
               </div>
-
-              <a
-                href={researchLinkForBucket(bucket)}
-                className="inline-flex items-center justify-center w-full rounded-xl py-3 font-semibold text-sm mb-2 transition-all hover:brightness-110"
-                style={{
-                  background: "linear-gradient(135deg, rgba(255, 210, 165, 0.35) 0%, rgba(200, 150, 90, 0.45) 100%)",
-                  border: "1px solid rgba(255, 235, 200, 0.5)",
-                  color: "#2a1810",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.35)",
-                }}
-              >
-                Open full resource page
-              </a>
 
               <button
                 type="button"
