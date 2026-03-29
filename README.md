@@ -8,6 +8,19 @@ Inspired by the *chautari* — the shaded resting stone beneath the pipal tree w
 
 ---
 
+## Hackathon team
+
+Chautari was developed as a **mental health themed hackathon** project by a team of four.
+
+| Teammate | Roles |
+|----------|--------|
+| **Hira Shrestha** | Data, resources, presentation, project manager |
+| **Lhamu Lama** | Assets manager, frontend developer, creative designer, database manager |
+| **Rahul Raj Yadav** | Full-stack developer, animator, authentication handler |
+| **Bijay Thakur** | Deployment, AI integration, full-stack developer |
+
+---
+
 ## Live routes
 
 | URL | Page |
@@ -61,22 +74,102 @@ Before entering the kite room a short modal asks for an **anonymous display name
 
 ---
 
-## Tech stack
+## Technologies
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | **Next.js 16** (App Router, Turbopack) |
-| UI library | **React 19** |
-| Language | **TypeScript 5** |
-| Styling | **Tailwind CSS 3**, custom CSS variables, grain texture |
-| Animation | **Framer Motion 11** |
+Complete inventory of languages, frameworks, npm packages, services, tooling, and browser APIs used in this repository.
+
+### At a glance
+
+| Area | Stack |
+|------|--------|
+| Runtime | **Node.js** 20+ (dev, build, local API routes) |
+| Language | **TypeScript** 5 (strict), **JSX** via React |
+| Framework | **Next.js** 16 (App Router, **Turbopack** in dev) |
+| UI | **React** 19, **react-dom** 19 |
+| Styling | **Tailwind CSS** 3, **PostCSS** 8, **Autoprefixer**, `globals.css` |
+| Animation | **Framer Motion** 11 |
+| Data / realtime | **Supabase** (`@supabase/supabase-js`) — Postgres + Realtime Broadcast |
+| Auth (API) | **bcryptjs**, HTTP-only cookies, Supabase `saathi_users` |
+| AI | **OpenAI** (Whisper, GPT-4o-mini chat), **Google Gemini** (Generative Language API) |
 | Icons | **Lucide React** |
-| Realtime / DB | **Supabase** (broadcast + Postgres, degrades gracefully without keys) |
-| AI — transcription | **OpenAI Whisper** (`whisper-1`) |
-| AI — classification | **OpenAI GPT-4o-mini** (JSON mode) |
-| AI — resources | **Google Gemini** (primary) → **OpenAI** (fallback) → static JSON |
-| Auth | bcryptjs + Supabase (`saathi_users` table), HTTP-only cookie |
-| Fonts | Fraunces (display), Source Sans 3 (body), Noto Sans Devanagari (Nepali) |
+| UI primitives | **Radix UI** — `@radix-ui/react-progress` (and transitive Radix packages) |
+| Fonts | **next/font/google** — Fraunces, Source Sans 3, Noto Sans Devanagari |
+| Lint / types | **ESLint** 10, **eslint-config-next**, **@types/**\* |
+
+---
+
+### npm dependencies (production)
+
+| Package | Role |
+|---------|------|
+| `next` | Framework: routing, RSC, `next/font`, `next/image`, `next/link`, API routes |
+| `react` / `react-dom` | UI runtime |
+| `framer-motion` | Motion / `AnimatePresence` |
+| `lucide-react` | Icon set |
+| `@supabase/supabase-js` | Browser + patterns for server client in API routes |
+| `bcryptjs` | Password hashing (register / login routes) |
+| `@radix-ui/react-progress` | Accessible progress primitive (dependency tree includes `@radix-ui/react-primitive`, `@radix-ui/react-slot`, `@radix-ui/react-compose-refs`, `@radix-ui/react-context`) |
+
+### npm devDependencies
+
+| Package | Role |
+|---------|------|
+| `typescript` | Type-checking |
+| `tailwindcss` | Utility-first CSS |
+| `postcss` | CSS pipeline for Tailwind |
+| `autoprefixer` | Vendor prefixes |
+| `eslint` | Linting |
+| `eslint-config-next` | Next + React rules |
+| `@types/node`, `@types/react`, `@types/react-dom`, `@types/bcryptjs` | TypeScript typings |
+
+### External HTTP APIs (not npm; keys in `.env.local`)
+
+| Service | Usage |
+|---------|--------|
+| **OpenAI** | `POST https://api.openai.com/v1/audio/transcriptions` — **Whisper** `whisper-1`; `POST .../v1/chat/completions` — **GPT-4o-mini** (classify + resource copy fallback) |
+| **Google AI (Gemini)** | `POST https://generativelanguage.googleapis.com/v1beta/models/...:generateContent` — resource suggestions (primary path when `GEMINI_API_KEY` is set) |
+
+### Next.js & project configuration
+
+| File / feature | Purpose |
+|----------------|---------|
+| `next.config.ts` | **Turbopack** `root`; **`allowedDevOrigins`** for tunnel hostnames (Tunnelmole, LocalTunnel, ngrok, Cloudflare quick tunnels) |
+| `tsconfig.json` | `paths`: `@/*` → `./src/*`; Next TS plugin; `target` ES2017 |
+| `postcss.config.mjs` | Tailwind + Autoprefixer |
+| `vercel.json` | **Vercel** — `framework`, `buildCommand`, `devCommand`, `installCommand` |
+| `package-lock.json` | **npm** lockfile |
+
+### Dev & sharing CLIs (scripts; not all are npm deps)
+
+| Command / tool | Notes |
+|----------------|--------|
+| `npx tunnelmole@2` → `tmole` | **Tunnelmole** — public URL to `localhost` |
+| `npx localtunnel` | **LocalTunnel** — alternative tunnel |
+| `cloudflared tunnel --url http://localhost:3000` | **Cloudflare Tunnel** — install `cloudflared` separately (e.g. `winget install Cloudflare.cloudflared`) |
+
+### Browser & Web Platform APIs (used in application code)
+
+| API | Typical use in Chautari |
+|-----|-------------------------|
+| **Web Speech API** | Live dictation in Come sit flow (`browserSpeech.ts`) |
+| **MediaRecorder** + **Blob** | Record audio for Whisper when Web Speech isn’t used |
+| **Fetch** | Client → Next API routes; server → OpenAI / Gemini |
+| **Web Audio API** | Procedural sound on kite release (`kiteFlySound.ts`) |
+| **`crypto.randomUUID`** | Session / client ids where applicable |
+| **`sessionStorage`** | `chautari_uid`, `chautari_uname` for Chautari room |
+| **`localStorage`** | Profile / username helpers where used |
+
+### Fonts (loaded via `next/font/google`)
+
+| Font | Role |
+|------|------|
+| **Fraunces** | Display / headings (`--font-display`) |
+| **Source Sans 3** | Body (`--font-sans`), weights 400–700 |
+| **Noto Sans Devanagari** | Nepali script (`--font-nepali`), weights 400–700 |
+
+### Static media formats
+
+JPEG / PNG images, MPEG audio, MP4 video — under **`public/`** (and optional mirrors under `src/Assets/`).
 
 ---
 
