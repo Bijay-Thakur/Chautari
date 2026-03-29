@@ -283,7 +283,7 @@ export default function ChautariHome() {
                       className="relative z-[1] inline-flex items-center"
                       style={{ gap: 10 }}
                     >
-                      Sit under Chautari
+                      Sit On Chautari
                       <motion.span
                         animate={{ x: [0, 6, 0], rotate: [0, 8, 0] }}
                         transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
