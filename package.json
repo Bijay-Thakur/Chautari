@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:lan": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "tunnel": "npx --yes --package=tunnelmole@2 tmole 3000",
+    "tunnel:cf": "cloudflared tunnel --url http://localhost:3000",
+    "tunnel:localtunnel": "npx --yes localtunnel --port 3000"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.0",
