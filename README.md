@@ -1,187 +1,394 @@
 # Chautari
 
-A **Next.js** web app for gentle mental-health awareness and community presence: a cinematic entry, a centered home hub, guided flows, shared space (“Chautari”), and optional AI-assisted reflection. The UI uses **Tailwind CSS**, **Framer Motion**, and **Radix** primitives where relevant.
+**A culturally grounded digital safe space for mental-health awareness and community presence.**
 
-> **Not medical advice.** This app is for education and self-reflection only. It does not diagnose or treat any condition. If you or someone else is in immediate danger, contact local emergency services or a crisis line.
+Inspired by the *chautari* — the shaded resting stone beneath the pipal tree where people stop, share, and breathe — this app creates a gentle, anonymous environment for reflection, expression, and connection. It is not medical advice or therapy. It is a place to rest.
 
----
-
-## Experience overview
-
-| Step | Route | What it does |
-|------|--------|----------------|
-| **Splash** | `/` | Full-viewport intro (birds, background, audio). **Enter** fades out and navigates to **`/home`**. |
-| **Home hub** | `/home` | Centered hero (“Chautari”), “A Place to Rest and Express”, privacy note, and **Sit under Chautari** — opens a modal before the room. |
-| **Chautari room** | `/chautari` | Shared kite field with realtime **Supabase** when configured; floating kites, hover cards, hugs, optional chat overlay, **CrisisBar** at bottom. |
-| **Come sit with yourself** | `/come-sit-with-yourself` | Voice or typed reflection → transcription (browser speech or **OpenAI Whisper** fallback) → classification into themed buckets → short video → suggestions via **Google Gemini** with **OpenAI** fallback. |
-| **Screening** | `/screening` | Questionnaire-style flow with results (`/screening/result`). |
-| **Break the chain** | `/break-the-chain` | Interactive chain metaphor with result view. |
-| **Research** | `/research` | Stub / placeholder for deeper reading links. |
-| **Auth** | API routes | Register / login (bcrypt + Supabase where configured). |
-
-### Home → Chautari: anonymous name
-
-- Tapping **Sit under Chautari** opens **`EnterChautariModal`**: a single field for an **anonymous display name** (stays on this device; not your real name).
-- On confirm, the name is stored in **`sessionStorage`** as **`chautari_uname`**, then the app navigates to **`/chautari`**.
-- If someone opens **`/chautari`** directly without a stored name, the room still assigns one via **`generateAnonName()`** (see `src/lib/anonName.ts`).
-
-### Global branding (inner pages)
-
-- **`SiteLogo`** (root layout): fixed top-left logo using **`/images/Logo.png`**, linking to **`/home`**.
-- Shown on all routes **except** **`/`** and **`/home`** so the splash and home hub stay uncluttered.
-
-### Chautari room UI
-
-- **No duplicate “Chautari” title** beside the logo — room branding is the global logo only.
-- **Floating kites** (`FloatingKite`, `KiteSVG`, physics from `kitePhysics`), **`KiteHoverCard`** on hover, **`HugOverlay`**, **`AnonymousChat`** where enabled.
-- Session: **`chautari_uid`** and **`chautari_uname`** in **`sessionStorage`** for this browser tab.
+> **Disclaimer:** Chautari is for education and self-reflection only. It does not diagnose or treat any condition. If you or someone else is in immediate danger, contact local emergency services or the TPO Nepal helpline: **16600102005** (toll-free).
 
 ---
 
-## Features (legacy table)
+## Live routes
 
-| Area | What it does |
-|------|----------------|
-| **Home (`/home`)** | Primary hub after splash; links into Chautari via modal + CTA. |
-| **Chautari (`/chautari`)** | Real-time shared “kites” over **Supabase** (presence, reactions, crisis resources bar). |
-| **Come sit with yourself (`/come-sit-with-yourself`)** | Voice or typed reflection → transcription → classification → video → suggestions (**Gemini** primary, **OpenAI** fallback). |
-| **Screening (`/screening`)** | Questionnaire-style flow with results. |
-| **Break the chain (`/break-the-chain`)** | Interactive chain metaphor with result view. |
-| **Research (`/research`)** | Stub / placeholder for deeper reading links. |
-| **Auth** | Register / login API routes (bcrypt + Supabase where configured). |
+| URL | Page |
+|-----|------|
+| `/` | Cinematic landing — animated birds, fire, ambient audio, "Enter Chautari" |
+| `/home` | Home hub — hero, "Sit under Chautari" CTA, privacy note |
+| `/chautari` | Shared kite room — release messages, hug kites, anonymous chat |
+| `/come-sit-with-yourself` | Guided reflection — voice/text → AI classification → video → resources |
+| `/screening` | Bilingual screening questionnaire (English + Nepali fields) |
+| `/screening/result` | Scored result with tier copy and next-step links |
+| `/break-the-chain` | Scenario chain flow with per-choice reflections |
+| `/break-the-chain/result` | Animated result — chain broken / bending / holding |
+| `/research` | Curated research links sorted by mental-health bucket |
+
+---
+
+## Feature walkthrough
+
+### 1. Landing (`/`)
+Full-viewport hero: background image, procedurally animated bird flock (multi-depth, wing-flap), fire particle system over the bonfire, ambient lantern glows, muted background audio with a toggle. After clicking **Enter Chautari**, audio fades and the app navigates to `/home`.
+
+### 2. Home (`/home`)
+Blurred atmospheric background, Fraunces-display hero, "A Place to Rest and Express" section with an animated **Sit under Chautari** pill button. Clicking it opens `EnterChautariModal`.
+
+### 3. Anonymous name modal
+Before entering the kite room a short modal asks for an **anonymous display name** (1–48 chars, device-only, not a real name). The name is stored in `sessionStorage` as `chautari_uname`. Direct `/chautari` visits fall back to a randomly generated name via `generateAnonName()`.
+
+### 4. Chautari room (`/chautari`)
+- **Night-sky canvas:** deterministic stars, wind streaks, bidirectional bird flock (white + black silhouettes, 72 birds, wing-flap animation).
+- **Floating kites:** each kite carries a message, a Nepali phrase, and an optional silencing phrase. Kites drift with physics-based motion from `kitePhysics`. Hover or tap shows `KiteHoverCard`.
+- **Release a kite:** type a message in the bottom input and press Enter. A kite appears instantly (optimistic), then persists to Supabase if configured.
+- **Hug a kite:** opens `HugOverlay` with the kite's message and an option to connect for anonymous chat.
+- **Anonymous chat:** Supabase broadcast channel per user pair — ephemeral, no server-side storage.
+- **Seed kites:** if Supabase is not configured (or no active room), deterministic seed kites populate the room so the experience is never empty.
+- **Crisis bar:** fixed bottom bar on every page with the TPO Nepal helpline.
+- **Global logo:** `SiteLogo` (top-left) links back to `/home` on all inner pages.
+
+### 5. Come sit with yourself (`/come-sit-with-yourself`)
+1. **Record or type** — browser microphone via Web Speech API (where supported), or typed free text.
+2. **Transcribe** — audio fallback goes to `POST /api/come-sit/transcribe` (OpenAI Whisper).
+3. **Classify** — text sent to `POST /api/come-sit/classify` → GPT-4o-mini returns a bucket (`depression` | `anxiety` | `psychosis`), title, and *how it affects you* copy.
+4. **Video** — a short clip from `/clips/` matched to the bucket plays with warm context copy.
+5. **Resources** — `POST /api/come-sit/resources` tries Gemini first, then OpenAI, then static fallback JSON. Returns structured "ways to help" + a summary.
+6. **Curated research** — `CuratedResearchList` renders `COME_SIT_RESEARCH_SECTIONS` sorted by the detected bucket.
+
+### 6. Screening & Break the Chain
+- Bilingual question sets (`chainData.ts`): English text + Nepali-flavored fields.
+- `QuestionCard` and `ProgressChain` animate answers.
+- Screening answers encode into a URL query; result page scores them (`calculateScreeningScore`) and shows tiered copy.
+- Chain answers extend the URL; result page runs `calculateChainScore` and shows one of three animated outcomes: **chain broken** (`ChainBreakAnimation` with confetti kites), **chain bending**, or **chain holding** (`KiteAnimation`).
 
 ---
 
 ## Tech stack
 
-- **Next.js** 16 (App Router), **React** 19, **TypeScript**
-- **Tailwind CSS** 3, **Framer Motion**, **Lucide** icons
-- **Supabase** (client + optional service role for server routes)
-- **OpenAI** (Whisper transcription, JSON classification, resources fallback)
-- **Google Gemini** (primary path for personalized resource suggestions when configured)
+| Layer | Technology |
+|-------|-----------|
+| Framework | **Next.js 16** (App Router, Turbopack) |
+| UI library | **React 19** |
+| Language | **TypeScript 5** |
+| Styling | **Tailwind CSS 3**, custom CSS variables, grain texture |
+| Animation | **Framer Motion 11** |
+| Icons | **Lucide React** |
+| Realtime / DB | **Supabase** (broadcast + Postgres, degrades gracefully without keys) |
+| AI — transcription | **OpenAI Whisper** (`whisper-1`) |
+| AI — classification | **OpenAI GPT-4o-mini** (JSON mode) |
+| AI — resources | **Google Gemini** (primary) → **OpenAI** (fallback) → static JSON |
+| Auth | bcryptjs + Supabase (`saathi_users` table), HTTP-only cookie |
+| Fonts | Fraunces (display), Source Sans 3 (body), Noto Sans Devanagari (Nepali) |
 
 ---
 
-## Prerequisites
+## Project layout
 
-- **Node.js** 20+ (recommended; matches typical Next 16 setups)
-- npm (or pnpm/yarn if you adapt commands)
+```
+Chautari/
+├── public/
+│   ├── images/
+│   │   ├── Background.jpeg     # Landing + home atmosphere
+│   │   ├── Background2.jpeg    # Alternate background
+│   │   └── Logo.png            # Site logo (SiteLogo component)
+│   ├── audio/
+│   │   └── Sound.mpeg          # Ambient landing audio
+│   └── clips/
+│       ├── Depression.mp4
+│       ├── Anxiety.mp4
+│       └── Psychosis.mp4
+│
+├── src/
+│   ├── app/
+│   │   ├── page.tsx                          # Landing
+│   │   ├── layout.tsx                        # Root layout (fonts, SiteLogo, CrisisBar)
+│   │   ├── globals.css                       # CSS variables, grain, typography
+│   │   ├── home/page.tsx                     # Home hub
+│   │   ├── chautari/page.tsx                 # Kite room
+│   │   ├── come-sit-with-yourself/page.tsx   # Reflection flow
+│   │   ├── research/page.tsx                 # Curated research
+│   │   ├── screening/page.tsx                # Screening questionnaire
+│   │   ├── screening/result/page.tsx         # Screening result
+│   │   ├── break-the-chain/page.tsx          # Scenario chain flow
+│   │   ├── break-the-chain/result/page.tsx   # Chain result
+│   │   └── api/
+│   │       ├── auth/login/route.ts
+│   │       ├── auth/register/route.ts
+│   │       ├── come-sit/transcribe/route.ts  # Whisper
+│   │       ├── come-sit/classify/route.ts    # GPT-4o-mini
+│   │       └── come-sit/resources/route.ts   # Gemini / OpenAI / static
+│   │
+│   ├── components/
+│   │   ├── AnonymousChat.tsx          # Ephemeral pair chat (Supabase broadcast)
+│   │   ├── ChainBreakAnimation.tsx    # Chain-break SVG + confetti
+│   │   ├── ChautariSkyBirds.tsx       # Bird flock for kite room
+│   │   ├── CrisisBar.tsx              # Fixed bottom helpline bar
+│   │   ├── EnterChautariModal.tsx     # Anonymous name modal (portal)
+│   │   ├── FloatingKite.tsx           # Draggable kite with hover card
+│   │   ├── HugOverlay.tsx             # Post-hug overlay + connect prompt
+│   │   ├── KiteAnimation.tsx          # Decorative kite SVG
+│   │   ├── KiteHoverCard.tsx          # Hover card with phrases + actions
+│   │   ├── KiteSVG.tsx                # Diamond kite SVG renderer
+│   │   ├── ProgressChain.tsx          # Chain-link progress indicator
+│   │   ├── QuestionCard.tsx           # Screening / scenario question UI
+│   │   ├── SiteLogo.tsx               # Fixed top-left logo (inner pages only)
+│   │   ├── come-sit/ComeSitFlow.tsx   # Full reflection UX flow
+│   │   └── come-sit/CuratedResearchList.tsx
+│   │
+│   ├── data/
+│   │   ├── chainData.ts               # Questions, scoring, category labels
+│   │   ├── seedKites.ts               # Demo kites for offline/no-DB mode
+│   │   ├── comeSitConfig.ts           # Buckets, video paths, warm copy
+│   │   └── comeSitResearchCurated.ts  # Curated research URLs + sort helpers
+│   │
+│   ├── lib/
+│   │   ├── supabase.ts                # Browser Supabase client
+│   │   ├── supabaseServer.ts          # Service-role client (API routes only)
+│   │   ├── apiRateLimit.ts            # In-memory IP rate limiting
+│   │   ├── anonName.ts                # generateAnonName()
+│   │   ├── authCookie.ts              # saathi_auth cookie helpers
+│   │   ├── browserSpeech.ts           # Web Speech API wrapper
+│   │   ├── comeSitResourcesAI.ts      # Gemini + OpenAI resource helpers
+│   │   ├── llmJson.ts                 # parseJsonObject (strip fences)
+│   │   ├── kitePhysics.ts             # generateKiteMotion, KITE_COLORS
+│   │   ├── kiteFlySound.ts            # Procedural Web Audio on kite release
+│   │   └── profileHelper.ts           # localStorage username helpers
+│   │
+│   ├── constants/
+│   │   └── auth.ts                    # Cookie name + value constants
+│   │
+│   └── Assets/                        # Source asset copies (optional)
+│       ├── Audio/Sound.mpeg
+│       ├── Clips/
+│       └── images/
+│
+├── next.config.ts                     # Turbopack, allowedDevOrigins for tunnels
+├── tailwind.config.ts                 # Theme (colors, fonts)
+├── tsconfig.json
+├── package.json
+└── .env.local                         # Secret keys — never commit
+```
 
 ---
 
 ## Getting started
 
+### Prerequisites
+
+- **Node.js 20+**
+- **npm** (or pnpm / yarn)
+
+### Install and run
+
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Bijay-Thakur/Chautari.git
 cd Chautari
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you’ll land on the **splash** (`/`); after **Enter**, you’ll be sent to **`/home`**.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Scripts
+### Build for production
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Development server |
-| `npm run build` | Production build |
-| `npm run start` | Run production server (after `build`) |
-| `npm run lint` | ESLint |
+```bash
+npm run build
+npm run start
+```
 
 ---
 
 ## Environment variables
 
-Create **`.env.local`** in the project root (never commit secrets). Example:
+Create `.env.local` in the project root. **Never commit this file.**
 
 ```env
-# Supabase (Chautari realtime, optional auth / server features)
+# ── Supabase ──────────────────────────────────────────────────────────────
+# Required for realtime kite room, auth API routes
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-# Server-only — only if your API routes use the service client
+
+# Server-only — needed only if login / register API routes are used
 SUPABASE_SERVICE_ROLE_KEY=
 
-# OpenAI — required for Come sit: Whisper, classify, and resources fallback
+# ── OpenAI ────────────────────────────────────────────────────────────────
+# Required for /api/come-sit/transcribe (Whisper) and /api/come-sit/classify
 OPENAI_API_KEY=
 
-# Google Gemini — optional; resources API tries Gemini first when set
+# ── Google Gemini ─────────────────────────────────────────────────────────
+# Optional — resources API tries Gemini first when this is set
 GEMINI_API_KEY=
 
-# Optional model tuning (Come sit resources)
+# Optional model overrides
 # GEMINI_MODEL=gemini-1.5-flash
 # GEMINI_MODEL_FALLBACKS=gemini-2.0-flash,gemini-1.5-pro
 # OPENAI_RESOURCES_MODEL=gpt-4o-mini
 ```
 
-- Without **Supabase** URL + anon key, Chautari realtime features stay disconnected (the client is built to degrade gracefully).
-- Without **`OPENAI_API_KEY`**, `/api/come-sit/transcribe` and `/api/come-sit/classify` return **503**; the resources route can still return **static** fallback copy when AI is unavailable.
+### Graceful degradation
+
+| Missing key | Consequence |
+|-------------|-------------|
+| Supabase keys | Kite room uses seed kites only; no realtime, no auth API |
+| `OPENAI_API_KEY` | Transcribe returns **503**; classify returns **503** |
+| `GEMINI_API_KEY` | Resources skips Gemini, tries OpenAI, falls back to static copy |
+| All AI keys | Resources returns static fallback JSON — app still functions |
 
 ---
 
-## Come sit: how it works
+## API reference
 
-1. **Transcription** — Prefer **Web Speech API** in supported browsers; otherwise recorded audio is sent to **`POST /api/come-sit/transcribe`** (Whisper).
-2. **Classification** — Edited text is sent to **`POST /api/come-sit/classify`**; response includes a bucket (`depression` \| `anxiety` \| `psychosis`), title, and short explanatory copy.
-3. **Resources** — After the video step, **`POST /api/come-sit/resources`** returns structured “ways to help” plus a short summary. It tries **Gemini** first, then **OpenAI**, then **static** fallback JSON.
+### `POST /api/come-sit/transcribe`
+Accepts `multipart/form-data` with an `audio` field. Sends to **OpenAI Whisper** and returns `{ text: string }`.
 
-### Rate limits (API)
+### `POST /api/come-sit/classify`
+Accepts `{ text: string }`. Returns `{ bucket, title, howItAffects }` from **GPT-4o-mini** (JSON mode).
 
-Best-effort **in-memory** limits per server instance (keyed by `x-forwarded-for` / `x-real-ip`):
+### `POST /api/come-sit/resources`
+Accepts `{ bucket, context? }`. Returns `{ ways: [...], summary }` — Gemini → OpenAI → static fallback.
+
+### `POST /api/auth/register`
+Accepts `{ username, password }`. Hashes password with **bcrypt**, inserts into `saathi_users`, sets `saathi_auth` cookie.
+
+### `POST /api/auth/login`
+Accepts `{ username, password }`. Validates against `saathi_users`, sets `saathi_auth` cookie.
+
+### Rate limits (in-memory, per server instance)
 
 | Route | Limit |
-|-------|--------|
-| `/api/come-sit/transcribe` | 12 requests / 15 minutes |
-| `/api/come-sit/classify` | 30 requests / 15 minutes |
-| `/api/come-sit/resources` | 20 requests / 15 minutes |
+|-------|-------|
+| `/api/come-sit/transcribe` | 12 req / 15 min |
+| `/api/come-sit/classify` | 30 req / 15 min |
+| `/api/come-sit/resources` | 20 req / 15 min |
 
-On **429**, the client should back off. For strict global limits in production, swap this for **Redis / Upstash** (or similar) behind the same interface.
+For production, replace with a Redis/Upstash-backed store across instances.
+
+---
+
+## Sharing locally (dev tunnels)
+
+Two terminals required:
+
+**Terminal 1**
+```bash
+npm run dev
+```
+
+**Terminal 2** — pick one:
+
+| Command | Tunnel service |
+|---------|---------------|
+| `npm run tunnel` | Tunnelmole (no install, free, pick the `http://` URL if HTTPS fails) |
+| `npm run tunnel:cf` | Cloudflare Quick Tunnel — install [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) first via `winget install Cloudflare.cloudflared` |
+| `npm run dev:lan` + LAN IP | Same Wi-Fi only — share `http://YOUR_IP:3000` with anyone on your network |
+
+`next.config.ts` already allows `*.tunnelmole.net`, `*.trycloudflare.com`, `*.ngrok-free.app`, and `*.loca.lt` as dev origins.
 
 ---
 
 ## Deployment
 
-The repo includes a **`vercel.json`** with default Next.js-oriented commands. Typical flow:
+### Vercel (recommended)
 
-1. Connect the Git repo to [Vercel](https://vercel.com).
-2. Set the same environment variables in the project settings.
-3. Deploy.
+1. Push the repo to GitHub.
+2. Import the project at [vercel.com/new](https://vercel.com/new).
+3. Add all environment variables in **Project Settings → Environment Variables**.
+4. Deploy. Every `git push` to `main` / `master` auto-deploys.
 
-**Note:** In-memory rate limits reset per serverless instance and are not a global cap across regions. Plan accordingly for production traffic.
+### Other hosts
+
+Any host that supports **Node.js 20+** and server-side Next.js should work. Set the same env vars.
+
+> **Note:** In-memory rate limits reset per serverless function cold start. Use Redis/Upstash for global limits across regions in production.
 
 ---
 
-## Project layout (high level)
+## Supabase schema (reference)
 
-```
-public/
-  images/
-    Background.jpeg    # Splash + home atmosphere
-    Logo.png             # Site logo (SiteLogo)
-src/
-  app/                   # App Router pages + API routes
-  components/            # Shared UI — e.g. EnterChautariModal, SiteLogo, FloatingKite,
-                         # KiteHoverCard, CrisisBar, Come sit flow, overlays
-  data/                  # Static config (e.g. seed kites, come-sit buckets, media)
-  lib/                   # Supabase clients, rate limit, LLM helpers, kite physics, anon names
+The kite room depends on these tables when Supabase is configured:
+
+```sql
+-- Active rooms
+chautari_rooms (id uuid PK, is_active bool, created_at timestamptz)
+
+-- Kites
+kites (
+  id uuid PK,
+  room_id uuid FK → chautari_rooms,
+  user_id uuid,
+  anonymous_name text,
+  message text,
+  color text,
+  position_x float,
+  position_y float,
+  hug_count int default 0,
+  created_at timestamptz
+)
+
+-- Hug events (for realtime count updates)
+kite_hugs (
+  id uuid PK,
+  kite_id uuid FK → kites,
+  hugger_user_id uuid,
+  hugger_name text,
+  kite_owner_user_id uuid,
+  created_at timestamptz
+)
+
+-- Auth (if using built-in auth API)
+saathi_users (
+  id uuid PK,
+  username text UNIQUE,
+  password_hash text,
+  anonymous_name text,
+  created_at timestamptz
+)
 ```
 
 ---
 
 ## Safety & privacy
 
-- Treat user-submitted text and audio as sensitive; log minimally in production.
-- Crisis UI in Chautari points users toward help; keep national/regional numbers accurate if you customize copy.
-- Anonymous names for Chautari are stored in **`sessionStorage`** only for the current session context; review **OpenAI** and **Google** data policies before enabling keys in production.
+- User messages in the kite room are stored in Supabase only when configured and only for the duration of a session (kites are deleted on user disconnect / page close).
+- Anonymous names are stored in `sessionStorage` only — they do not leave the device unless sent with a kite message.
+- Audio from "Come sit" is sent to OpenAI Whisper; no recording is stored server-side.
+- The `CrisisBar` is always visible and links to **TPO Nepal: 16600102005**.
+- Review OpenAI and Google data-retention policies before enabling API keys in production.
 
 ---
 
-## Package name
+## Scripts reference
 
-The npm `package.json` name is `saathi-break-the-chain`; the product surface is branded **Chautari**. Rename the package in `package.json` if you want them aligned.
+| Script | Purpose |
+|--------|---------|
+| `npm run dev` | Next.js dev server (`localhost:3000`) |
+| `npm run dev:lan` | Dev server bound to `0.0.0.0` — accessible on LAN |
+| `npm run build` | Production build |
+| `npm run start` | Start production server (requires `build` first) |
+| `npm run lint` | ESLint |
+| `npm run tunnel` | Tunnelmole — public URL for `localhost:3000` |
+| `npm run tunnel:cf` | Cloudflare Quick Tunnel |
+| `npm run tunnel:localtunnel` | LocalTunnel (fallback — often unstable) |
+
+---
+
+## Branches
+
+| Branch | Purpose |
+|--------|---------|
+| `master` | Stable, mirrors `Bijay` (use for production / Vercel) |
+| `Bijay` | Primary development branch — most up to date |
+| `Rahul` | Contributor branch |
 
 ---
 
 ## Contributing
 
-Issues and PRs welcome. Please run `npm run lint` and `npm run build` before submitting changes.
+1. Branch off `Bijay` for new work.
+2. Run `npm run lint` and `npm run build` before opening a pull request.
+3. Keep `.env.local` out of commits — it is listed in `.gitignore`.
+4. Test with Supabase keys disabled to confirm graceful degradation still works.
+
+---
+
+## Package note
+
+The npm package name in `package.json` is `saathi-break-the-chain` (historical). The product brand is **Chautari**. Update `package.json` when aligning them.
