@@ -423,10 +423,21 @@ export default function LandingPage() {
 
   /* ── Start ambient audio on mount ── */
   useEffect(() => {
+    const SKIP_START_SEC = 4; // first seconds of the file are silent / not useful
+
     const audio = new Audio("/audio/Sound.mpeg");
     audio.loop = true;
     audio.volume = 0.38;       // medium — not too loud
     audioRef.current = audio;
+
+    /** Skip intro on first load and whenever loop wraps back to t≈0 */
+    const skipIntro = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > SKIP_START_SEC && audio.currentTime < SKIP_START_SEC) {
+        audio.currentTime = SKIP_START_SEC;
+      }
+    };
+    audio.addEventListener("loadedmetadata", skipIntro);
+    audio.addEventListener("timeupdate", skipIntro);
 
     /* Try immediate autoplay; browsers may block until first interaction */
     const playPromise = audio.play();
@@ -444,6 +455,8 @@ export default function LandingPage() {
     }
 
     return () => {
+      audio.removeEventListener("loadedmetadata", skipIntro);
+      audio.removeEventListener("timeupdate", skipIntro);
       audio.pause();
       audio.src = "";
     };

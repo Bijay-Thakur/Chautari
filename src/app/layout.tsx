@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Noto_Sans_Devanagari, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import CrisisBar from "@/components/CrisisBar";
+import SiteLogo from "@/components/SiteLogo";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
   return (
     <html lang="ne" className={fontVars} style={{ background: "var(--bg-root)" }}>
       <body className="antialiased grain font-sans text-[var(--text-primary)]" style={{ background: "var(--bg-root)" }}>
+        <SiteLogo />
         <main className="pb-12">
           {children}
         </main>

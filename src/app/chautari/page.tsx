@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { FloatingKite, type KiteData } from "@/components/FloatingKite";
 import { HugOverlay } from "@/components/HugOverlay";
-import { ReleasePanel } from "@/components/ReleasePanel";
 import { AnonymousChat } from "@/components/AnonymousChat";
 import { generateAnonName } from "@/lib/anonName";
 import { generateKiteMotion, KITE_COLORS } from "@/lib/kitePhysics";
@@ -53,6 +52,7 @@ export default function ChautariRoom() {
   });
   const [chatPartner, setChatPartner] = useState<{ id: string; name: string } | null>(null);
   const [isReleasing, setIsReleasing] = useState(false);
+  const [releaseInput, setReleaseInput] = useState("");
   const [, forceUpdate] = useState(0); // trigger re-render when motions are set
 
   const supabaseReady = isSupabaseConfigured;
@@ -316,6 +316,13 @@ export default function ChautariRoom() {
     }
   }, [userId, userName, roomId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const submitReleaseFromInput = useCallback(() => {
+    const t = releaseInput.trim();
+    if (!t || isReleasing || !userId) return;
+    void handleRelease(t);
+    setReleaseInput("");
+  }, [releaseInput, isReleasing, userId, handleRelease]);
+
   function handleConnect() {
     if (!hugOverlay.kite) return;
     setChatPartner({
@@ -376,36 +383,7 @@ export default function ChautariRoom() {
         />
       ))}
 
-      {/* ── Top-left: room label + tagline ── */}
-      <div
-        style={{
-          position: "absolute",
-          top: 14,
-          left: 20,
-          zIndex: 20,
-        }}
-      >
-        <div style={{
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontStyle: "italic",
-          fontSize: 20,
-          color: "rgba(255, 210, 150, 0.9)",
-          letterSpacing: "0.02em",
-          textShadow: "0 1px 3px rgba(0,0,0,0.35)",
-          lineHeight: 1,
-        }}>
-          Chautari
-        </div>
-        <div style={{
-          fontSize: 10.5,
-          color: "rgba(220, 190, 140, 0.52)",
-          letterSpacing: "0.06em",
-          marginTop: 4,
-          fontFamily: "Inter, system-ui, sans-serif",
-        }}>
-          a resting stone under the open sky
-        </div>
-      </div>
+      {/* ── Top-left: branding is the global SiteLogo only (no duplicate title) ── */}
 
       {/* ── Top-center: users bar ── */}
       <div
@@ -497,47 +475,275 @@ export default function ChautariRoom() {
           );
         })}
 
-        {/* ── Ambient welcome text ── */}
+        {/* ── Welcome copy + minimal release input (bottom center) ── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 1.8 }}
           style={{
             position: "absolute",
-            bottom: "14%",
-            left: 0,
-            right: "22%",         // stay clear of the release panel
+            bottom: "max(11%, 72px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "min(92vw, 520px)",
             textAlign: "center",
-            pointerEvents: "none",
             zIndex: 4,
+            pointerEvents: "auto",
           }}
         >
-          <p style={{
-            fontFamily: "Georgia, 'Times New Roman', serif",
-            fontStyle: "italic",
-            fontSize: "clamp(0.9rem, 1.8vw, 1.1rem)",
-            color: "rgba(235, 205, 155, 0.38)",
-            letterSpacing: "0.03em",
-            lineHeight: 1.7,
-            margin: 0,
-            textShadow: "0 2px 12px rgba(0,0,0,0.5)",
-          }}>
+          <p
+            style={{
+              fontFamily: "Georgia, 'Times New Roman', serif",
+              fontStyle: "italic",
+              fontSize: "clamp(1rem, 2vw, 1.2rem)",
+              color: "rgba(255, 245, 230, 0.96)",
+              letterSpacing: "0.02em",
+              lineHeight: 1.65,
+              margin: 0,
+              textShadow:
+                "0 1px 2px rgba(0,0,0,0.85), 0 0 24px rgba(251, 191, 36, 0.15), 0 2px 14px rgba(0,0,0,0.6)",
+            }}
+          >
             Whatever you&apos;re holding — you can let it go here.
           </p>
-          <p style={{
-            fontFamily: "Inter, system-ui, sans-serif",
-            fontSize: "clamp(0.65rem, 1.2vw, 0.75rem)",
-            color: "rgba(200, 175, 130, 0.28)",
-            letterSpacing: "0.12em",
-            marginTop: 6,
-            textTransform: "uppercase",
-          }}>
-            write it · release it · send warmth to others
+          <p
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: "clamp(0.72rem, 1.35vw, 0.85rem)",
+              color: "rgba(255, 228, 200, 0.88)",
+              letterSpacing: "0.06em",
+              marginTop: 10,
+              marginBottom: 14,
+              lineHeight: 1.5,
+              textTransform: "none",
+              textShadow: "0 1px 8px rgba(0,0,0,0.75)",
+            }}
+          >
+            Write it, release it, and relate with others.
           </p>
+          <input
+            type="text"
+            value={releaseInput}
+            maxLength={160}
+            placeholder="Fly your kite, express yourself"
+            disabled={isReleasing || !userId}
+            onChange={(e) => setReleaseInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                submitReleaseFromInput();
+              }
+            }}
+            aria-label="Message for your kite — press Enter to release"
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "12px 18px",
+              borderRadius: 14,
+              border: "1px solid rgba(245, 166, 35, 0.35)",
+              outline: "none",
+              fontSize: 14,
+              fontFamily: "Inter, system-ui, sans-serif",
+              color: "rgba(255, 252, 248, 0.96)",
+              background: "rgba(12, 16, 28, 0.55)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              caretColor: "rgba(245, 166, 35, 0.95)",
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(34, 211, 238, 0.08)",
+              transition: "border-color 0.2s, box-shadow 0.2s",
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "rgba(34, 211, 238, 0.45)";
+              e.target.style.boxShadow =
+                "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 28px rgba(34, 211, 238, 0.12), 0 0 0 1px rgba(245, 166, 35, 0.25)";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "rgba(245, 166, 35, 0.35)";
+              e.target.style.boxShadow =
+                "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(34, 211, 238, 0.08)";
+            }}
+          />
         </motion.div>
 
-        {/* Release panel */}
-        <ReleasePanel onRelease={handleRelease} isReleasing={isReleasing} />
+        {/* Come sit — floating copy + CTA (gentle sway + directional hints) */}
+        <div
+          className="come-sit-invite"
+          style={{
+            position: "absolute",
+            right: 22,
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 12,
+            width: "min(280px, calc(100vw - 36px))",
+            pointerEvents: "none",
+            textAlign: "right",
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.2, duration: 0.55, ease: "easeOut" }}
+            style={{ pointerEvents: "none" }}
+          >
+            <motion.div
+              animate={{
+                x: [0, -7, 0, 5, 0],
+                y: [0, -2.5, 0, 2, 0],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                times: [0, 0.2, 0.45, 0.72, 1],
+                delay: 1.75,
+              }}
+            >
+            <div
+              style={{
+                pointerEvents: "auto",
+                paddingRight: 2,
+                borderRight: "2px solid rgba(251, 191, 36, 0.35)",
+                paddingLeft: 8,
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontStyle: "italic",
+                  fontSize: "clamp(1.05rem, 1.9vw, 1.25rem)",
+                  lineHeight: 1.35,
+                  color: "rgba(255, 248, 238, 0.98)",
+                  margin: "0 0 8px 0",
+                  textShadow:
+                    "0 1px 3px rgba(0,0,0,0.9), 0 0 28px rgba(251, 191, 36, 0.12), 0 2px 16px rgba(0,0,0,0.65)",
+                }}
+              >
+                Come sit with yourself
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  color: "rgba(255, 230, 210, 0.88)",
+                  margin: "0 0 10px 0",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontWeight: 450,
+                  textShadow: "0 1px 8px rgba(0,0,0,0.85), 0 0 20px rgba(0,0,0,0.4)",
+                }}
+              >
+                Speak in your own words — we&apos;ll offer gentle next steps when you&apos;re ready.
+              </p>
+
+              {/* Soft arrows toward the doorway (left / inward) */}
+              <div
+                aria-hidden
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 5,
+                  marginBottom: 8,
+                  opacity: 0.85,
+                }}
+              >
+                {[0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    style={{
+                      fontSize: 13,
+                      color: "rgba(125, 211, 252, 0.75)",
+                      textShadow: "0 0 12px rgba(34, 211, 238, 0.35)",
+                      fontFamily: "Inter, system-ui, sans-serif",
+                    }}
+                    animate={{ x: [0, -3, 0], opacity: [0.35, 0.95, 0.35] }}
+                    transition={{
+                      duration: 2.4,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: i * 0.22,
+                    }}
+                  >
+                    ‹
+                  </motion.span>
+                ))}
+              </div>
+
+              {/* Downward cue toward the button */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginBottom: 10,
+                }}
+              >
+                <motion.span
+                  aria-hidden
+                  style={{
+                    fontSize: 20,
+                    lineHeight: 1,
+                    color: "rgba(251, 191, 36, 0.9)",
+                    filter: "drop-shadow(0 0 10px rgba(251, 191, 36, 0.45))",
+                  }}
+                  animate={{ y: [0, 6, 0], opacity: [0.65, 1, 0.65] }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  ↓
+                </motion.span>
+              </div>
+
+              <motion.div
+                style={{ display: "inline-block" }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Link
+                  href="/come-sit-with-yourself"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 10,
+                    textDecoration: "none",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    letterSpacing: "0.03em",
+                    color: "#0c1020",
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    padding: "11px 20px",
+                    borderRadius: 999,
+                    background: "linear-gradient(145deg, #fde68a 0%, #f59e0b 45%, #d97706 100%)",
+                    boxShadow:
+                      "0 2px 0 rgba(255,255,255,0.35) inset, 0 6px 24px rgba(245, 158, 11, 0.45), 0 0 40px rgba(34, 211, 238, 0.15)",
+                    border: "1px solid rgba(255, 237, 200, 0.55)",
+                    transition: "filter 0.2s ease, box-shadow 0.2s ease",
+                  }}
+                >
+                  Step inside
+                  <motion.span
+                    aria-hidden
+                    style={{ fontSize: 15, lineHeight: 1, display: "inline-block" }}
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    →
+                  </motion.span>
+                </Link>
+              </motion.div>
+            </div>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        <style>{`
+          @media (max-width: 720px) {
+            .come-sit-invite {
+              right: 12px !important;
+              width: min(240px, calc(100vw - 100px)) !important;
+              top: 118px !important;
+              transform: none !important;
+            }
+          }
+        `}</style>
 
         {/* Anonymous chat */}
         <AnimatePresence>

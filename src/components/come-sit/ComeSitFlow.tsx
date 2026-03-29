@@ -28,30 +28,31 @@ type ResourcesState = {
   source?: string;
 };
 
+/** Bucket accents — light glass + neon per theme */
 const BUCKET_ACCENT: Record<
   MentalHealthBucket,
   { ring: string; soft: string; card: string; glow: string; stepDot: string }
 > = {
   depression: {
-    ring: "rgba(255, 190, 200, 0.5)",
-    soft: "rgba(180, 100, 120, 0.28)",
-    card: "linear-gradient(155deg, rgba(255,228,232,0.2) 0%, rgba(120,64,78,0.42) 55%, rgba(60,36,44,0.5) 100%)",
-    glow: "rgba(255, 180, 190, 0.14)",
-    stepDot: "linear-gradient(135deg, #ffb4c0, #c4788a)",
+    ring: "rgba(244, 114, 182, 0.45)",
+    soft: "rgba(255, 228, 235, 0.95)",
+    card: "linear-gradient(155deg, rgba(255,245,248,0.92) 0%, rgba(255,220,230,0.88) 55%, rgba(255,200,215,0.75) 100%)",
+    glow: "rgba(244, 114, 182, 0.25)",
+    stepDot: "linear-gradient(135deg, #f9a8d4, #db2777)",
   },
   anxiety: {
-    ring: "rgba(190, 235, 195, 0.48)",
-    soft: "rgba(100, 150, 110, 0.26)",
-    card: "linear-gradient(155deg, rgba(230,255,236,0.18) 0%, rgba(64,108,78,0.4) 55%, rgba(36,58,44,0.48) 100%)",
-    glow: "rgba(170, 220, 180, 0.12)",
-    stepDot: "linear-gradient(135deg, #b8e8c0, #6a9b72)",
+    ring: "rgba(34, 211, 238, 0.5)",
+    soft: "rgba(224, 255, 240, 0.9)",
+    card: "linear-gradient(155deg, rgba(240,253,250,0.95) 0%, rgba(204,251,241,0.88) 55%, rgba(167,243,208,0.75) 100%)",
+    glow: "rgba(45, 212, 191, 0.28)",
+    stepDot: "linear-gradient(135deg, #5eead4, #0d9488)",
   },
   psychosis: {
-    ring: "rgba(215, 195, 255, 0.45)",
-    soft: "rgba(130, 100, 170, 0.24)",
-    card: "linear-gradient(155deg, rgba(244,236,255,0.18) 0%, rgba(88,68,118,0.4) 55%, rgba(48,38,68,0.48) 100%)",
-    glow: "rgba(200, 180, 255, 0.12)",
-    stepDot: "linear-gradient(135deg, #d4c4f8, #8b74b8)",
+    ring: "rgba(167, 139, 250, 0.5)",
+    soft: "rgba(245, 243, 255, 0.95)",
+    card: "linear-gradient(155deg, rgba(250,245,255,0.95) 0%, rgba(237,233,254,0.9) 55%, rgba(221,214,254,0.8) 100%)",
+    glow: "rgba(167, 139, 250, 0.28)",
+    stepDot: "linear-gradient(135deg, #c4b5fd, #7c3aed)",
   },
 };
 
@@ -322,9 +323,10 @@ export default function ComeSitFlow() {
     }
   };
 
-  const onVideoEnded = () => {
+  /** Open the gentle-steps modal — called when the clip finishes (`onEnded`) or as a manual fallback. */
+  const onVideoEnded = useCallback(() => {
     setShowSolutions(true);
-  };
+  }, []);
 
   const reset = () => {
     stopBrowserRecognition();
@@ -350,21 +352,28 @@ export default function ComeSitFlow() {
   return (
     <div
       className="min-h-screen relative overflow-x-hidden pb-24"
-      style={{ background: "#0a0807" }}
+      style={{
+        background:
+          "linear-gradient(165deg, #f8fafc 0%, #eef6ff 35%, #f5f0ff 70%, #fffbeb 100%)",
+      }}
     >
+      {/* Soft neon wash + glass depth */}
       <div
-        className="pointer-events-none fixed inset-0 opacity-40"
+        className="pointer-events-none fixed inset-0"
         style={{
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(120,72,58,0.25), transparent 55%)",
+          background: `
+            radial-gradient(ellipse 90% 60% at 15% 10%, rgba(34, 211, 238, 0.12), transparent 50%),
+            radial-gradient(ellipse 70% 50% at 85% 20%, rgba(167, 139, 250, 0.1), transparent 45%),
+            radial-gradient(ellipse 80% 40% at 50% 100%, rgba(251, 191, 36, 0.08), transparent 55%)
+          `,
         }}
       />
 
       <header className="relative z-10 flex items-center gap-3 px-5 pt-6 pb-2 max-w-2xl mx-auto">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm transition-opacity hover:opacity-90"
-          style={{ color: "rgba(196,163,90,0.75)" }}
+          className="inline-flex items-center gap-2 text-sm font-medium transition-all hover:text-cyan-600"
+          style={{ color: "rgba(30, 41, 59, 0.65)" }}
         >
           <ArrowLeft className="w-4 h-4" />
           Home
@@ -378,18 +387,21 @@ export default function ComeSitFlow() {
           className="text-center mb-10"
         >
           <p
-            className="text-[0.65rem] uppercase tracking-[0.35em] mb-3"
-            style={{ color: "rgba(196,163,90,0.45)" }}
+            className="text-[0.65rem] uppercase tracking-[0.35em] mb-3 font-semibold"
+            style={{ color: "rgba(8, 145, 178, 0.75)" }}
           >
             Come sit with yourself
           </p>
           <h1
             className="font-display text-[clamp(1.75rem,6vw,2.35rem)] leading-tight mb-4"
-            style={{ color: "#efe4d0" }}
+            style={{
+              color: "#0f172a",
+              textShadow: "0 0 40px rgba(34, 211, 238, 0.15)",
+            }}
           >
             Speak what you&apos;re holding
           </h1>
-          <p className="text-sm leading-relaxed" style={{ color: "rgba(212,196,176,0.55)" }}>
+          <p className="text-sm leading-relaxed max-w-lg mx-auto" style={{ color: "rgba(51, 65, 85, 0.72)" }}>
             {liveSpeechOk
               ? "Words appear as you speak. Stop when you’re done, edit if needed, then continue. Educational only — not a diagnosis or emergency service."
               : "Record your voice — we transcribe after you stop. You can also type. Educational only — not a diagnosis or emergency service."}
@@ -400,30 +412,36 @@ export default function ComeSitFlow() {
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="rounded-[22px] p-6 sm:p-8 space-y-6"
+            className="rounded-[24px] p-6 sm:p-8 space-y-6 backdrop-blur-xl"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(196,163,90,0.12)",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.35)",
+              background: "rgba(255, 255, 255, 0.42)",
+              border: "1px solid rgba(255, 255, 255, 0.65)",
+              boxShadow:
+                "0 4px 24px rgba(34, 211, 238, 0.08), 0 24px 64px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255,255,255,0.9)",
             }}
           >
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <button
                 type="button"
                 onClick={recording ? stopRecording : startRecording}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 font-semibold text-sm transition-all"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 font-semibold text-sm transition-all hover:brightness-[1.02] active:scale-[0.99]"
                 style={{
                   background: recording
-                    ? "linear-gradient(135deg, rgba(180,72,72,0.35), rgba(120,40,40,0.45))"
-                    : "linear-gradient(135deg, rgba(196,163,90,0.22), rgba(154,123,60,0.15))",
-                  color: recording ? "#fecaca" : "rgba(244,232,216,0.95)",
-                  border: `1px solid ${recording ? "rgba(248,113,113,0.35)" : "rgba(196,163,90,0.28)"}`,
+                    ? "linear-gradient(135deg, rgba(254, 202, 202, 0.95), rgba(252, 165, 165, 0.85))"
+                    : "linear-gradient(135deg, rgba(224, 242, 254, 0.95), rgba(207, 250, 254, 0.75))",
+                  color: recording ? "#991b1b" : "#0e7490",
+                  border: recording
+                    ? "1px solid rgba(248, 113, 113, 0.45)"
+                    : "1px solid rgba(34, 211, 238, 0.45)",
+                  boxShadow: recording
+                    ? "0 0 24px rgba(248, 113, 113, 0.2)"
+                    : "0 0 28px rgba(34, 211, 238, 0.22)",
                 }}
               >
                 {recording ? (
                   <>
                     <MicOff className="w-5 h-5" />
-                    {liveSpeechOk ? "Stop listening" : "Stop &amp; transcribe"}
+                    {liveSpeechOk ? "Stop listening" : "Stop & transcribe"}
                   </>
                 ) : (
                   <>
@@ -433,20 +451,20 @@ export default function ComeSitFlow() {
                 )}
               </button>
               {recording && (
-                <span className="text-xs flex items-center gap-2" style={{ color: "#fca5a5" }}>
-                  <span className="inline-block w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                <span className="text-xs flex items-center gap-2 font-medium" style={{ color: "#dc2626" }}>
+                  <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#f87171]" />
                   {liveSpeechOk ? "Live captioning…" : "Recording…"}
                 </span>
               )}
             </div>
 
             {liveSpeechOk ? (
-              <p className="text-xs leading-relaxed" style={{ color: "rgba(196,163,90,0.42)" }}>
+              <p className="text-xs leading-relaxed" style={{ color: "rgba(71, 85, 105, 0.75)" }}>
                 Live transcription runs in your browser (Chrome, Edge, or Safari). Text updates as you
                 talk; stop when you’re done, then edit if anything looks off.
               </p>
             ) : (
-              <p className="text-xs leading-relaxed" style={{ color: "rgba(196,163,90,0.42)" }}>
+              <p className="text-xs leading-relaxed" style={{ color: "rgba(71, 85, 105, 0.75)" }}>
                 This browser uses server transcription after you stop. For real-time captions, try
                 Chrome or Edge — or type below.
               </p>
@@ -456,7 +474,7 @@ export default function ComeSitFlow() {
               <label
                 htmlFor="come-sit-transcript"
                 className="block text-xs font-semibold uppercase tracking-wider mb-2"
-                style={{ color: "rgba(196,163,90,0.65)" }}
+                style={{ color: "rgba(14, 116, 144, 0.85)" }}
               >
                 Your words (edit if the transcript is off)
               </label>
@@ -471,19 +489,20 @@ export default function ComeSitFlow() {
                     ? "Tap Speak — your words will appear here as you talk."
                     : "Record above, or type here if you prefer not to use the mic."
                 }
-                className="w-full rounded-xl px-4 py-3 text-sm leading-relaxed resize-y outline-none transition-shadow"
+                className="w-full rounded-xl px-4 py-3 text-sm leading-relaxed resize-y outline-none transition-shadow focus:ring-2 focus:ring-cyan-400/40"
                 style={{
-                  background: "rgba(0,0,0,0.35)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "rgba(248,240,230,0.95)",
+                  background: "rgba(255, 255, 255, 0.72)",
+                  border: "1px solid rgba(167, 139, 250, 0.22)",
+                  color: "#0f172a",
                   minHeight: "140px",
                   opacity: recording && liveSpeechOk ? 0.98 : 1,
+                  boxShadow: "inset 0 1px 2px rgba(255,255,255,0.8)",
                 }}
               />
             </div>
 
             {error && (
-              <p className="text-sm" style={{ color: "#fca5a5" }}>
+              <p className="text-sm font-medium" style={{ color: "#dc2626" }}>
                 {error}
               </p>
             )}
@@ -492,11 +511,12 @@ export default function ComeSitFlow() {
               type="button"
               onClick={submitFeelings}
               disabled={transcript.trim().length < 3}
-              className="w-full rounded-xl py-3.5 font-semibold text-sm flex items-center justify-center gap-2 transition-opacity disabled:opacity-35 disabled:cursor-not-allowed"
+              className="w-full rounded-xl py-3.5 font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-[1.03] active:scale-[0.995]"
               style={{
-                background: "linear-gradient(135deg, #c4a35a 0%, #8f7030 100%)",
-                color: "#1a1208",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+                background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 45%, #d946ef 130%)",
+                color: "#1e1b4b",
+                boxShadow:
+                  "0 8px 32px rgba(251, 191, 36, 0.35), 0 0 40px rgba(217, 70, 239, 0.15), inset 0 1px 0 rgba(255,255,255,0.5)",
               }}
             >
               <Sparkles className="w-4 h-4" />
@@ -507,14 +527,15 @@ export default function ComeSitFlow() {
 
         {(phase === "transcribing" || phase === "classifying") && (
           <div
-            className="flex flex-col items-center justify-center gap-4 py-24 rounded-[22px]"
+            className="flex flex-col items-center justify-center gap-4 py-24 rounded-[24px] backdrop-blur-xl"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(196,163,90,0.1)",
+              background: "rgba(255,255,255,0.5)",
+              border: "1px solid rgba(255,255,255,0.7)",
+              boxShadow: "0 8px 40px rgba(34, 211, 238, 0.08)",
             }}
           >
-            <Loader2 className="w-10 h-10 animate-spin" style={{ color: "rgba(196,163,90,0.85)" }} />
-            <p className="text-sm" style={{ color: "rgba(212,196,176,0.6)" }}>
+            <Loader2 className="w-10 h-10 animate-spin" style={{ color: "#0891b2" }} />
+            <p className="text-sm font-medium" style={{ color: "rgba(51, 65, 85, 0.75)" }}>
               {phase === "transcribing" ? "Turning your voice into text…" : "Listening to themes with care…"}
             </p>
           </div>
@@ -527,68 +548,71 @@ export default function ComeSitFlow() {
             className="space-y-6"
           >
             <div
-              className="rounded-[22px] p-5 sm:p-6 mb-4"
+              className="rounded-[24px] p-5 sm:p-6 mb-4 backdrop-blur-xl"
               style={{
-                background: `linear-gradient(135deg, ${BUCKET_ACCENT[bucket].soft} 0%, rgba(28,22,18,0.75) 100%)`,
+                background: `linear-gradient(135deg, ${BUCKET_ACCENT[bucket].soft} 0%, rgba(255,255,255,0.55) 100%)`,
                 border: `2px solid ${BUCKET_ACCENT[bucket].ring}`,
-                boxShadow: `0 0 40px ${BUCKET_ACCENT[bucket].soft}, inset 0 1px 0 rgba(255,245,230,0.12)`,
+                boxShadow: `0 8px 40px ${BUCKET_ACCENT[bucket].glow}, inset 0 1px 0 rgba(255,255,255,0.9)`,
               }}
             >
               <p
                 className="text-[0.65rem] font-bold uppercase tracking-[0.2em] mb-2"
-                style={{ color: "rgba(255,236,210,0.75)" }}
+                style={{ color: "rgba(14, 116, 144, 0.75)" }}
               >
                 Your reflection points toward
               </p>
               <p
                 className="font-display text-lg sm:text-xl mb-3"
-                style={{ color: "#fff5e6", textShadow: "0 2px 12px rgba(0,0,0,0.35)" }}
+                style={{ color: "#0f172a", textShadow: "0 0 32px rgba(34, 211, 238, 0.2)" }}
               >
                 {BUCKET_WARM_HIGHLIGHT[bucket].theme}
               </p>
-              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,232,215,0.88)" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(51, 65, 85, 0.88)" }}>
                 {BUCKET_WARM_HIGHLIGHT[bucket].message}
               </p>
             </div>
 
             <div
-              className="rounded-[22px] p-6 sm:p-8 space-y-4"
+              className="rounded-[24px] p-6 sm:p-8 space-y-4 backdrop-blur-xl"
               style={{
-                background: "rgba(255,248,238,0.06)",
-                border: "1px solid rgba(196,163,90,0.22)",
-                boxShadow: "0 20px 50px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,250,240,0.08)",
+                background: "rgba(255, 255, 255, 0.5)",
+                border: "1px solid rgba(255, 255, 255, 0.65)",
+                boxShadow:
+                  "0 12px 48px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255,255,255,0.85)",
               }}
             >
-              <p className="text-xs uppercase tracking-widest" style={{ color: "rgba(196,163,90,0.65)" }}>
+              <p className="text-xs uppercase tracking-widest font-semibold" style={{ color: "rgba(124, 58, 237, 0.7)" }}>
                 What we heard in your words
               </p>
-              <h2 className="font-display text-xl sm:text-2xl leading-snug" style={{ color: "#faf3e6" }}>
+              <h2 className="font-display text-xl sm:text-2xl leading-snug" style={{ color: "#0f172a" }}>
                 {title || meta.headline}
               </h2>
-              <p className="text-sm leading-relaxed" style={{ color: "rgba(235,218,195,0.9)" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(51, 65, 85, 0.88)" }}>
                 {howItAffects}
               </p>
-              <p className="text-xs italic leading-relaxed pt-2 border-t border-amber-100/10" style={{ color: "rgba(200,185,165,0.55)" }}>
+              <p className="text-xs italic leading-relaxed pt-2 border-t border-slate-200/80" style={{ color: "rgba(100, 116, 139, 0.75)" }}>
                 This is supportive routing for learning, not a clinical label. If you are in danger,
                 contact local emergency services or your crisis line.
               </p>
             </div>
 
             <div
-              className="rounded-[22px] overflow-hidden"
+              className="rounded-[24px] overflow-hidden backdrop-blur-md"
               style={{
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: "#000",
+                border: "1px solid rgba(15, 23, 42, 0.12)",
+                boxShadow: "0 16px 48px rgba(15, 23, 42, 0.08)",
+                background: "rgba(15, 23, 42, 0.92)",
               }}
             >
               <div
-                className="flex items-center gap-2 px-4 py-2 text-xs"
+                className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium backdrop-blur-sm"
                 style={{
-                  background: "rgba(30,24,18,0.95)",
-                  color: "rgba(196,163,90,0.65)",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  color: "rgba(224, 242, 254, 0.9)",
+                  borderBottom: "1px solid rgba(34, 211, 238, 0.15)",
                 }}
               >
-                <Volume2 className="w-3.5 h-3.5" />
+                <Volume2 className="w-3.5 h-3.5 text-cyan-300" />
                 {meta.videoCaption}
               </div>
               <video
@@ -600,21 +624,33 @@ export default function ComeSitFlow() {
                 src={videoSrc}
                 onEnded={onVideoEnded}
               />
-              <button
-                type="button"
-                onClick={onVideoEnded}
-                className="w-full text-center text-xs py-2.5 transition-opacity hover:opacity-90"
-                style={{ color: "rgba(196,163,90,0.45)" }}
+              <div
+                className="flex flex-col items-stretch border-t"
+                style={{ borderColor: "rgba(34, 211, 238, 0.12)" }}
               >
-                Clip won&apos;t play? Open suggestions
-              </button>
+                <Link
+                  href={researchLinkForBucket(bucket)}
+                  className="w-full text-center text-xs py-2.5 font-medium transition-colors hover:text-cyan-200 underline underline-offset-2"
+                  style={{ color: "rgba(186, 230, 253, 0.92)" }}
+                >
+                  Learn more from real stories and research
+                </Link>
+                <button
+                  type="button"
+                  onClick={onVideoEnded}
+                  className="w-full text-center text-[0.65rem] py-2 transition-colors hover:text-cyan-200/90"
+                  style={{ color: "rgba(165, 243, 252, 0.45)" }}
+                >
+                  Can&apos;t play the video? Open suggestions
+                </button>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={reset}
-              className="text-sm underline underline-offset-4 mx-auto block"
-              style={{ color: "rgba(196,163,90,0.5)" }}
+              className="text-sm underline underline-offset-4 mx-auto block font-medium transition-colors hover:text-cyan-600"
+              style={{ color: "rgba(71, 85, 105, 0.75)" }}
             >
               Start over
             </button>
@@ -622,16 +658,22 @@ export default function ComeSitFlow() {
         )}
 
         {phase === "error" && (
-          <div className="text-center py-12 space-y-4">
-            <p style={{ color: "#fca5a5" }}>{error}</p>
+          <div
+            className="text-center py-12 space-y-4 rounded-[24px] backdrop-blur-xl px-4"
+            style={{
+              background: "rgba(254, 242, 242, 0.75)",
+              border: "1px solid rgba(252, 165, 165, 0.4)",
+            }}
+          >
+            <p className="font-medium" style={{ color: "#b91c1c" }}>{error}</p>
             <button
               type="button"
               onClick={() => {
                 setPhase("speak");
                 setError(null);
               }}
-              className="text-sm underline"
-              style={{ color: "rgba(196,163,90,0.7)" }}
+              className="text-sm underline font-medium hover:text-cyan-600"
+              style={{ color: "#0891b2" }}
             >
               Try again
             </button>
@@ -647,9 +689,9 @@ export default function ComeSitFlow() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             style={{
-              background:
-                "linear-gradient(180deg, rgba(45, 28, 22, 0.55) 0%, rgba(18, 12, 8, 0.78) 100%)",
-              backdropFilter: "blur(8px)",
+              background: "linear-gradient(180deg, rgba(15, 23, 42, 0.35) 0%, rgba(241, 245, 249, 0.55) 100%)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
             }}
             onClick={() => setShowSolutions(false)}
           >
@@ -661,21 +703,21 @@ export default function ComeSitFlow() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 24, opacity: 0 }}
               transition={{ type: "spring", damping: 26, stiffness: 320 }}
-              className="w-full max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto rounded-[28px] p-6 sm:p-8 shadow-2xl"
+              className="w-full max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto rounded-[28px] p-6 sm:p-8 shadow-2xl backdrop-blur-2xl"
               style={{
-                background: `linear-gradient(168deg, rgba(72, 48, 38, 0.98) 0%, rgba(48, 34, 28, 0.99) 35%, rgba(32, 24, 20, 1) 100%)`,
-                border: `2px solid rgba(255, 200, 160, 0.28)`,
-                boxShadow: `0 32px 90px rgba(0,0,0,0.5), 0 0 80px ${BUCKET_ACCENT[bucket].glow}, inset 0 1px 0 rgba(255, 248, 235, 0.22)`,
+                background: "linear-gradient(168deg, rgba(255,255,255,0.88) 0%, rgba(248, 250, 252, 0.92) 45%, rgba(255, 251, 235, 0.9) 100%)",
+                border: `2px solid rgba(255, 255, 255, 0.85)`,
+                boxShadow: `0 32px 90px rgba(15, 23, 42, 0.12), 0 0 60px ${BUCKET_ACCENT[bucket].glow}, inset 0 1px 0 rgba(255, 255, 255, 0.95)`,
               }}
               onClick={(e) => e.stopPropagation()}
             >
               <div
                 className="rounded-2xl px-4 py-2.5 mb-5 text-center text-[0.68rem] font-bold uppercase tracking-[0.2em]"
                 style={{
-                  background: `linear-gradient(90deg, rgba(255,210,170,0.2), rgba(255,230,200,0.12))`,
-                  color: "rgba(255, 245, 220, 0.95)",
-                  border: "1px solid rgba(255, 200, 150, 0.35)",
-                  boxShadow: "0 4px 20px rgba(255, 180, 120, 0.08)",
+                  background: `linear-gradient(90deg, rgba(224, 242, 254, 0.9), rgba(250, 232, 255, 0.85))`,
+                  color: "#0f172a",
+                  border: `1px solid ${BUCKET_ACCENT[bucket].ring}`,
+                  boxShadow: `0 4px 24px ${BUCKET_ACCENT[bucket].glow}`,
                 }}
               >
                 {BUCKET_WARM_HIGHLIGHT[bucket].theme}
@@ -684,8 +726,8 @@ export default function ComeSitFlow() {
                 id="solutions-title"
                 className="font-display text-xl sm:text-2xl mb-2 leading-tight"
                 style={{
-                  color: "#fffaf0",
-                  textShadow: "0 2px 24px rgba(255, 200, 150, 0.2)",
+                  color: "#0f172a",
+                  textShadow: "0 0 40px rgba(34, 211, 238, 0.12)",
                 }}
               >
                 Gentle steps you might try
@@ -693,9 +735,9 @@ export default function ComeSitFlow() {
               <p
                 className="text-sm mb-6 leading-relaxed rounded-xl px-3 py-2.5 -mx-1"
                 style={{
-                  color: "rgba(255, 235, 210, 0.9)",
-                  background: "rgba(255, 200, 150, 0.06)",
-                  border: "1px solid rgba(255, 210, 180, 0.12)",
+                  color: "rgba(51, 65, 85, 0.88)",
+                  background: "rgba(255, 255, 255, 0.55)",
+                  border: "1px solid rgba(226, 232, 240, 0.9)",
                 }}
               >
                 These ideas come from public mental-health education — they&apos;re invitations, not
@@ -705,8 +747,8 @@ export default function ComeSitFlow() {
 
               {resLoading && (
                 <div className="flex items-center gap-2 py-8 justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin" style={{ color: "rgba(255, 205, 150, 0.95)" }} />
-                  <span className="text-sm" style={{ color: "rgba(255, 220, 190, 0.8)" }}>
+                  <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#0891b2" }} />
+                  <span className="text-sm font-medium" style={{ color: "rgba(71, 85, 105, 0.85)" }}>
                     Gathering kind next steps…
                   </span>
                 </div>
@@ -720,30 +762,30 @@ export default function ComeSitFlow() {
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.06 }}
-                      className="rounded-2xl p-4 sm:p-5"
+                      className="rounded-2xl p-4 sm:p-5 backdrop-blur-sm"
                       style={{
                         background: BUCKET_ACCENT[bucket].card,
                         border: `1px solid ${BUCKET_ACCENT[bucket].ring}`,
-                        boxShadow: `0 10px 32px rgba(0,0,0,0.25), 0 0 40px ${BUCKET_ACCENT[bucket].glow}, inset 0 1px 0 rgba(255, 252, 245, 0.14)`,
+                        boxShadow: `0 8px 28px rgba(15, 23, 42, 0.06), 0 0 36px ${BUCKET_ACCENT[bucket].glow}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
                       }}
                     >
                       <p
                         className="font-semibold text-sm mb-2 flex items-center gap-3"
-                        style={{ color: "#fff8f0" }}
+                        style={{ color: "#0f172a" }}
                       >
                         <span
                           className="inline-flex w-7 h-7 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold shadow-md"
                           style={{
                             background: BUCKET_ACCENT[bucket].stepDot,
-                            color: "#1a1008",
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                            color: "#ffffff",
+                            boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
                           }}
                         >
                           {i + 1}
                         </span>
                         {w.title}
                       </p>
-                      <p className="text-sm leading-relaxed pl-10" style={{ color: "rgba(255, 236, 218, 0.92)" }}>
+                      <p className="text-sm leading-relaxed pl-10" style={{ color: "rgba(51, 65, 85, 0.9)" }}>
                         {w.description}
                       </p>
                     </motion.li>
@@ -755,9 +797,9 @@ export default function ComeSitFlow() {
                 <p
                   className="text-sm mb-6 leading-relaxed px-3 py-3 rounded-xl italic"
                   style={{
-                    color: "rgba(255, 225, 195, 0.88)",
-                    background: "rgba(255, 240, 220, 0.05)",
-                    borderLeft: "3px solid rgba(255, 190, 130, 0.45)",
+                    color: "rgba(51, 65, 85, 0.88)",
+                    background: "rgba(254, 249, 195, 0.35)",
+                    borderLeft: "3px solid rgba(251, 191, 36, 0.65)",
                   }}
                 >
                   {resources.learnMoreSummary}
@@ -766,38 +808,38 @@ export default function ComeSitFlow() {
 
               <div
                 className="mb-2 pt-4"
-                style={{ borderTop: "1px solid rgba(255, 200, 160, 0.12)" }}
+                style={{ borderTop: "1px solid rgba(226, 232, 240, 0.95)" }}
               >
                 <p
                   className="text-[0.65rem] font-bold uppercase tracking-[0.24em] mb-3 text-center"
-                  style={{ color: "rgba(255, 200, 150, 0.55)" }}
+                  style={{ color: "rgba(124, 58, 237, 0.65)" }}
                 >
-                  When you want more context
+                  Continue exploring
                 </p>
                 <Link
                   href={researchLinkForBucket(bucket)}
                   onClick={() => setShowSolutions(false)}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold text-sm transition-all hover:brightness-110 hover:scale-[1.01] active:scale-[0.99]"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold text-sm transition-all hover:brightness-[1.02] hover:scale-[1.01] active:scale-[0.99]"
                   style={{
-                    background: "linear-gradient(135deg, rgba(255, 210, 165, 0.42) 0%, rgba(200, 150, 90, 0.5) 100%)",
-                    border: "1px solid rgba(255, 235, 200, 0.55)",
-                    color: "#2a1810",
-                    boxShadow: "0 8px 28px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.4)",
+                    background: "linear-gradient(135deg, #22d3ee 0%, #a78bfa 55%, #fbbf24 130%)",
+                    border: "1px solid rgba(255, 255, 255, 0.5)",
+                    color: "#0f172a",
+                    boxShadow: "0 8px 32px rgba(34, 211, 238, 0.25), inset 0 1px 0 rgba(255,255,255,0.45)",
                   }}
                 >
                   <BookOpen className="w-4 h-4 shrink-0 opacity-90" aria-hidden />
-                  Learn more about the topic
+                  Learn more from real stories and research
                 </Link>
-                <p className="text-center text-[0.7rem] mt-2.5 leading-relaxed" style={{ color: "rgba(255, 210, 180, 0.45)" }}>
-                  Opens the research &amp; resources page — articles, cases, and stories.
+                <p className="text-center text-[0.7rem] mt-2.5 leading-relaxed" style={{ color: "rgba(100, 116, 139, 0.75)" }}>
+                  Opens the research &amp; resources page for this theme.
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setShowSolutions(false)}
-                className="w-full text-sm py-2.5 rounded-xl transition-colors hover:bg-white/5"
-                style={{ color: "rgba(255, 215, 185, 0.7)" }}
+                className="w-full text-sm py-2.5 rounded-xl transition-colors hover:bg-slate-100/80 font-medium"
+                style={{ color: "rgba(71, 85, 105, 0.85)" }}
               >
                 Close
               </button>
