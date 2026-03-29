@@ -324,6 +324,8 @@ export default function ChautariRoom() {
     setReleaseInput("");
   }, [releaseInput, isReleasing, userId, handleRelease]);
 
+  const releaseDisabled = isReleasing || !userId || releaseInput.trim().length === 0;
+
   function handleConnect() {
     if (!hugOverlay.kite) return;
     setChatPartner({
@@ -524,49 +526,211 @@ export default function ChautariRoom() {
           >
             Write it, release it, and relate with others.
           </p>
-          <input
-            type="text"
-            value={releaseInput}
-            maxLength={160}
-            placeholder="Fly your kite, express yourself"
-            disabled={isReleasing || !userId}
-            onChange={(e) => setReleaseInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                submitReleaseFromInput();
-              }
-            }}
-            aria-label="Message for your kite — press Enter to release"
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "12px 18px",
-              borderRadius: 14,
-              border: "1px solid rgba(245, 166, 35, 0.35)",
-              outline: "none",
-              fontSize: 14,
-              fontFamily: "Inter, system-ui, sans-serif",
-              color: "rgba(255, 252, 248, 0.96)",
-              background: "rgba(12, 16, 28, 0.55)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-              caretColor: "rgba(245, 166, 35, 0.95)",
-              boxShadow:
-                "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(34, 211, 238, 0.08)",
-              transition: "border-color 0.2s, box-shadow 0.2s",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "rgba(34, 211, 238, 0.45)";
-              e.target.style.boxShadow =
-                "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 28px rgba(34, 211, 238, 0.12), 0 0 0 1px rgba(245, 166, 35, 0.25)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "rgba(245, 166, 35, 0.35)";
-              e.target.style.boxShadow =
-                "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(34, 211, 238, 0.08)";
-            }}
-          />
+          <div style={{ display: "flex", gap: 10, alignItems: "stretch" }}>
+            <input
+              type="text"
+              value={releaseInput}
+              maxLength={160}
+              placeholder="Fly your kite, express yourself"
+              disabled={isReleasing || !userId}
+              onChange={(e) => setReleaseInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitReleaseFromInput();
+                }
+              }}
+              aria-label="Message for your kite — press Enter or click Release"
+              style={{
+                flex: 1,
+                minWidth: 0,
+                boxSizing: "border-box",
+                padding: "12px 18px",
+                borderRadius: 14,
+                border: "1px solid rgba(245, 166, 35, 0.35)",
+                outline: "none",
+                fontSize: 14,
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "rgba(255, 252, 248, 0.96)",
+                background: "rgba(12, 16, 28, 0.55)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                caretColor: "rgba(245, 166, 35, 0.95)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(34, 211, 238, 0.08)",
+                transition: "border-color 0.2s, box-shadow 0.2s",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "rgba(34, 211, 238, 0.45)";
+                e.target.style.boxShadow =
+                  "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 28px rgba(34, 211, 238, 0.12), 0 0 0 1px rgba(245, 166, 35, 0.25)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "rgba(245, 166, 35, 0.35)";
+                e.target.style.boxShadow =
+                  "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(34, 211, 238, 0.08)";
+              }}
+            />
+            <div
+              style={{
+                position: "relative",
+                flexShrink: 0,
+                display: "inline-flex",
+                alignItems: "center",
+              }}
+            >
+              {/* Pulsing outer glow — only when actionable */}
+              {!releaseDisabled && (
+                <motion.div
+                  aria-hidden
+                  style={{
+                    position: "absolute",
+                    inset: -14,
+                    borderRadius: 22,
+                    background:
+                      "radial-gradient(ellipse 80% 90% at 50% 40%, rgba(251, 191, 36, 0.55) 0%, rgba(245, 158, 11, 0.15) 45%, transparent 70%)",
+                    filter: "blur(14px)",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                  }}
+                  animate={{
+                    opacity: [0.45, 0.95, 0.45],
+                    scale: [0.96, 1.05, 0.96],
+                  }}
+                  transition={{
+                    duration: 2.4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              )}
+              <motion.button
+                type="button"
+                onClick={submitReleaseFromInput}
+                disabled={releaseDisabled}
+                aria-label="Release kite"
+                whileHover={
+                  releaseDisabled
+                    ? {}
+                    : {
+                        scale: 1.06,
+                        boxShadow:
+                          "0 0 36px rgba(251, 191, 36, 0.55), 0 8px 32px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255,255,255,0.35)",
+                      }
+                }
+                whileTap={releaseDisabled ? {} : { scale: 0.96 }}
+                animate={
+                  releaseDisabled
+                    ? {}
+                    : {
+                        boxShadow: [
+                          "0 4px 24px rgba(245, 158, 11, 0.35), 0 0 28px rgba(251, 191, 36, 0.25), inset 0 1px 0 rgba(255,255,255,0.22)",
+                          "0 6px 32px rgba(251, 191, 36, 0.5), 0 0 40px rgba(253, 224, 71, 0.35), inset 0 1px 0 rgba(255,255,255,0.28)",
+                          "0 4px 24px rgba(245, 158, 11, 0.35), 0 0 28px rgba(251, 191, 36, 0.25), inset 0 1px 0 rgba(255,255,255,0.22)",
+                        ],
+                      }
+                }
+                transition={{
+                  boxShadow: { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
+                }}
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  flexShrink: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "12px 22px",
+                  borderRadius: 16,
+                  border: releaseDisabled
+                    ? "1px solid rgba(245, 166, 35, 0.2)"
+                    : "1px solid rgba(253, 224, 71, 0.65)",
+                  background: releaseDisabled
+                    ? "linear-gradient(145deg, rgba(55, 48, 35, 0.85) 0%, rgba(35, 32, 28, 0.9) 100%)"
+                    : "linear-gradient(145deg, #fde68a 0%, #f59e0b 42%, #d97706 100%)",
+                  color: releaseDisabled ? "rgba(180, 170, 150, 0.55)" : "#1c1917",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase" as const,
+                  cursor: releaseDisabled ? "not-allowed" : "pointer",
+                  opacity: releaseDisabled ? 0.45 : 1,
+                  overflow: "hidden",
+                  boxShadow: releaseDisabled
+                    ? "none"
+                    : "0 4px 24px rgba(245, 158, 11, 0.35), 0 0 28px rgba(251, 191, 36, 0.25), inset 0 1px 0 rgba(255,255,255,0.22)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {/* Shimmer sweep */}
+                {!releaseDisabled && (
+                  <motion.span
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      bottom: 0,
+                      width: "45%",
+                      left: "-20%",
+                      transform: "skewX(-12deg)",
+                      background:
+                        "linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.55) 45%, transparent 90%)",
+                    }}
+                    animate={{ x: ["-30%", "220%"] }}
+                    transition={{
+                      duration: 2.8,
+                      repeat: Infinity,
+                      ease: "linear",
+                      repeatDelay: 0.6,
+                    }}
+                  />
+                )}
+                <motion.span
+                  style={{
+                    display: "inline-flex",
+                    position: "relative",
+                    zIndex: 2,
+                  }}
+                  animate={
+                    releaseDisabled ? {} : { y: [0, -3, 0], rotate: [0, -4, 0, 4, 0] }
+                  }
+                  transition={{
+                    duration: 3.2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                    <path
+                      d="M12 2 L22 12 L12 22 L2 12 Z"
+                      stroke="currentColor"
+                      strokeWidth="1.85"
+                      strokeLinejoin="round"
+                      fill="rgba(0,0,0,0.12)"
+                    />
+                    <line
+                      x1="12"
+                      y1="22"
+                      x2="12"
+                      y2="28"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M10 26 Q12 28 14 26"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </svg>
+                </motion.span>
+                <span style={{ position: "relative", zIndex: 2 }}>Release</span>
+              </motion.button>
+            </div>
+          </div>
         </motion.div>
 
         {/* Come sit — floating copy + CTA (gentle sway + directional hints) */}

@@ -371,7 +371,7 @@ export default function ComeSitFlow() {
 
       <header className="relative z-10 flex items-center gap-3 px-5 pt-6 pb-2 max-w-2xl mx-auto">
         <Link
-          href="/"
+          href="/home"
           className="inline-flex items-center gap-2 text-sm font-medium transition-all hover:text-cyan-600"
           style={{ color: "rgba(30, 41, 59, 0.65)" }}
         >
@@ -482,11 +482,10 @@ export default function ComeSitFlow() {
                 id="come-sit-transcript"
                 value={transcript}
                 onChange={(e) => setTranscript(e.target.value)}
-                readOnly={recording && liveSpeechOk}
                 rows={6}
                 placeholder={
                   liveSpeechOk
-                    ? "Tap Speak — your words will appear here as you talk."
+                    ? "Tap Speak — your words will appear here as you talk. You can also type or edit freely."
                     : "Record above, or type here if you prefer not to use the mic."
                 }
                 className="w-full rounded-xl px-4 py-3 text-sm leading-relaxed resize-y outline-none transition-shadow focus:ring-2 focus:ring-cyan-400/40"
@@ -495,7 +494,6 @@ export default function ComeSitFlow() {
                   border: "1px solid rgba(167, 139, 250, 0.22)",
                   color: "#0f172a",
                   minHeight: "140px",
-                  opacity: recording && liveSpeechOk ? 0.98 : 1,
                   boxShadow: "inset 0 1px 2px rgba(255,255,255,0.8)",
                 }}
               />

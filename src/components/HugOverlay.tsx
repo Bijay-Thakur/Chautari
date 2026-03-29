@@ -138,14 +138,16 @@ export function HugOverlay({ visible, kiteMessage, kiteOwnerName, onConnect, onD
             <button
               onClick={onDismiss}
               style={{
-                background: "transparent",
-                color: "rgba(255,255,255,0.28)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,245,220,0.88)",
+                border: "1px solid rgba(255,255,255,0.28)",
                 borderRadius: 10,
                 padding: "12px 26px",
                 fontSize: 13,
+                fontWeight: 500,
                 cursor: "pointer",
                 fontFamily: "Inter, system-ui, sans-serif",
+                letterSpacing: "0.01em",
               }}
             >
               Just feel it
