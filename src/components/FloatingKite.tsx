@@ -3,16 +3,18 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback } from "react";
 import { KiteSVG } from "./KiteSVG";
+import { KiteHoverCard } from "./KiteHoverCard";
 import { KITE_COLORS, generateKiteMotion } from "@/lib/kitePhysics";
 
-/** Larger kite body; text and overlays scale with this */
-const KITE_SIZE = 122;
+const KITE_SIZE = 152;
 const DRAG_THRESHOLD_PX = 8;
 const DRAG_THRESHOLD_SQ = DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX;
 
 export type KiteData = {
   id: string;
   message: string;
+  nepaliPhrase?: string;
+  silencingPhrase?: string;
   color: string;
   position_x: number;
   position_y: number;
@@ -51,6 +53,7 @@ export function FloatingKite({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pointerDownRef = useRef(false);
   const longHoldRef = useRef(false);
   const downAtRef = useRef(0);
@@ -82,6 +85,30 @@ export function FloatingKite({
   ].join(" ");
 
   const physicsPaused = held || isDragging;
+
+  // ── Hover card handlers ──────────────────────────────────────────────────
+
+  const handleMouseEnter = useCallback(() => {
+    clearTimeout(leaveTimerRef.current);
+    setHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    leaveTimerRef.current = setTimeout(() => {
+      setHovered(false);
+    }, 140);
+  }, []);
+
+  const handleRelate = useCallback(() => {
+    setHovered(false);
+    onHug(kite.id);
+  }, [kite.id, onHug]);
+
+  const handleJustFeel = useCallback(() => {
+    setHovered(false);
+  }, []);
+
+  // ── Drag / hold pointer handlers ─────────────────────────────────────────
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     pointerDownRef.current = true;
@@ -180,7 +207,7 @@ export function FloatingKite({
         position: "absolute",
         left: `${kite.position_x}%`,
         top: `${kite.position_y}%`,
-        zIndex: hovered || held || isDragging ? 25 : 10,
+        zIndex: hovered || held || isDragging ? 50 : 10,
         isolation: "isolate",
       }}
       initial={isNew ? { y: 90, opacity: 0, scale: 0.55 } : { opacity: 0 }}
@@ -191,12 +218,17 @@ export function FloatingKite({
           : { duration: 0.45, ease: "easeOut" }
       }
     >
+      {/* Drag translate wrapper — also the hover boundary for the card */}
       <div
         style={{
           transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
           willChange: isDragging ? "transform" : "auto",
+          position: "relative",
         }}
+        onMouseEnter={!isOwn ? handleMouseEnter : undefined}
+        onMouseLeave={!isOwn ? handleMouseLeave : undefined}
       >
+        {/* Ambient glow pulse */}
         <motion.div
           aria-hidden
           style={{
@@ -212,6 +244,7 @@ export function FloatingKite({
           transition={{ duration: 3.6 + Math.random() * 2, repeat: Infinity, ease: "easeInOut" }}
         />
 
+        {/* Physics / interactive kite body */}
         <motion.div
           style={{
             cursor: isDragging ? "grabbing" : held ? "grabbing" : "grab",
@@ -320,70 +353,25 @@ export function FloatingKite({
               ✦
             </div>
           )}
-
-          <AnimatePresence>
-            {hovered && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.94 }}
-                transition={{ duration: 0.18 }}
-                style={{
-                  position: "absolute",
-                  bottom: -76,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  width: 188,
-                  background: "rgba(14, 18, 28, 0.97)",
-                  border: `1px solid ${colorEntry.glow.replace(/[\d.]+\)$/, "0.4)")}`,
-                  borderRadius: 12,
-                  padding: "11px 14px",
-                  pointerEvents: "none",
-                  fontFamily: "Inter, system-ui, sans-serif",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  zIndex: 30,
-                  boxShadow: `0 6px 28px rgba(0,0,0,0.55), 0 0 16px ${colorEntry.glow.replace(/[\d.]+\)$/, "0.18)")}`,
-                }}
-              >
-                <div
-                  style={{
-                    height: 2,
-                    borderRadius: 1,
-                    background: `linear-gradient(90deg, ${colorEntry.tail}, transparent)`,
-                    marginBottom: 8,
-                    opacity: 0.75,
-                  }}
-                />
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: "rgba(255, 255, 255, 0.92)",
-                    lineHeight: 1.55,
-                    marginBottom: 8,
-                    fontStyle: "italic",
-                  }}
-                >
-                  &ldquo;{kite.message}&rdquo;
-                </p>
-                <p
-                  style={{
-                    fontSize: 11,
-                    color: "rgba(255, 235, 210, 0.88)",
-                    letterSpacing: "0.02em",
-                    lineHeight: 1.45,
-                  }}
-                >
-                  {isOwn ? (
-                    <>Drag to move · Hold to steady your kite</>
-                  ) : (
-                    <>Drag to move · Hold to steady · Quick tap for a hug</>
-                  )}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
+
+        {/* Hover card — outside the rotating physics div so it stays axis-aligned */}
+        <AnimatePresence>
+          {hovered && !isOwn && kite.nepaliPhrase && (
+            <div
+              onMouseEnter={() => clearTimeout(leaveTimerRef.current)}
+              onMouseLeave={handleMouseLeave}
+            >
+              <KiteHoverCard
+                nepaliPhrase={kite.nepaliPhrase}
+                silencingPhrase={kite.silencingPhrase}
+                onRelate={handleRelate}
+                onJustFeel={handleJustFeel}
+                positionRight={kite.position_x > 55}
+              />
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

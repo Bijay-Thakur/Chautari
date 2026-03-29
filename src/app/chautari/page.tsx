@@ -24,6 +24,18 @@ const STARS = Array.from({ length: 40 }, (_, i) => ({
   opacity: 0.18 + ((i * 41) % 38) / 100,
 }));
 
+/* ─── Wind streaks (deterministic positions, varying speeds) ──────────── */
+const WIND_STREAKS = Array.from({ length: 16 }, (_, i) => ({
+  id: i,
+  top: `${4 + ((i * 67 + 23) % 84)}%`,
+  width: 110 + ((i * 53 + 17) % 190),
+  height: i % 5 === 0 ? 2 : 1,
+  opacity: 0.032 + ((i * 23 + 7) % 7) / 100,
+  duration: 11 + ((i * 41 + 3) % 16),
+  delay: -(((i * 5.7 + 1.3) % 24)),
+  blur: i % 4 === 0 ? "1px" : "0px",
+}));
+
 /* ─── Simulated room members (letters from anon adjectives) ───────────── */
 const ROOM_LETTERS = ["Q", "G", "W", "S", "R"];
 
@@ -197,9 +209,11 @@ export default function ChautariRoom() {
   /* ── Helpers ── */
   function makeSeedKites(): KiteData[] {
     return seedKites.map((sk, i) => ({
-      id: `seed-${i}`,
+      id: sk.id,
       anonymous_name: generateAnonName(),
       message: sk.message,
+      nepaliPhrase: sk.nepaliPhrase,
+      silencingPhrase: sk.silencingPhrase,
       color: sk.color,
       position_x: sk.position_x,
       position_y: sk.position_y,
@@ -338,6 +352,26 @@ export default function ChautariRoom() {
             opacity: s.opacity,
             animation: `twinkle ${s.dur} ease-in-out ${s.delay} infinite`,
             pointerEvents: "none",
+          }}
+        />
+      ))}
+
+      {/* ── Wind streaks ── */}
+      {WIND_STREAKS.map((w) => (
+        <div
+          key={w.id}
+          style={{
+            position: "absolute",
+            top: w.top,
+            left: -350,
+            width: w.width,
+            height: w.height,
+            background: `linear-gradient(90deg, transparent 0%, rgba(180,200,255,${w.opacity}) 40%, rgba(200,215,255,${w.opacity}) 60%, transparent 100%)`,
+            borderRadius: 2,
+            filter: w.blur !== "0px" ? `blur(${w.blur})` : undefined,
+            animation: `windSlide ${w.duration}s linear ${w.delay}s infinite`,
+            pointerEvents: "none",
+            zIndex: 2,
           }}
         />
       ))}
@@ -730,6 +764,14 @@ export default function ChautariRoom() {
         </div>
 
         <style>{`
+          @keyframes windSlide {
+            from { left: -350px; }
+            to   { left: 2800px; }
+          }
+          @keyframes twinkle {
+            0%, 100% { opacity: var(--op, 0.2); }
+            50%       { opacity: calc(var(--op, 0.2) * 2.2); }
+          }
           @keyframes crisis-heartbeat {
             0%, 100% { transform: scale(1); }
             50%       { transform: scale(1.05); }
