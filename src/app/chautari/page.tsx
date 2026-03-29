@@ -11,6 +11,7 @@ import { generateKiteMotion, KITE_COLORS } from "@/lib/kitePhysics";
 import { seedKites } from "@/data/seedKites";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { playKiteHushSound } from "@/lib/kiteFlySound";
+import { ChautariSkyBirds } from "@/components/ChautariSkyBirds";
 
 
 /* ─── Stars (deterministic to avoid hydration mismatch) ───────────────── */
@@ -459,6 +460,8 @@ export default function ChautariRoom() {
           bottom: 60,
         }}
       >
+        <ChautariSkyBirds />
+
         {/* Kites */}
         {kites.map((kite) => {
           const mp = kiteMotions.current[kite.id];

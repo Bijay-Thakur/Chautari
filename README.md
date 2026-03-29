@@ -1,24 +1,54 @@
 # Chautari
 
-A **Next.js** web app for gentle mental-health awareness and community presence: guided flows, shared space (“Chautari”), and optional AI-assisted reflection. The UI uses **Tailwind CSS**, **Framer Motion**, and **Radix** primitives where relevant.
+A **Next.js** web app for gentle mental-health awareness and community presence: a cinematic entry, a centered home hub, guided flows, shared space (“Chautari”), and optional AI-assisted reflection. The UI uses **Tailwind CSS**, **Framer Motion**, and **Radix** primitives where relevant.
 
 > **Not medical advice.** This app is for education and self-reflection only. It does not diagnose or treat any condition. If you or someone else is in immediate danger, contact local emergency services or a crisis line.
 
 ---
 
-## Features
+## Experience overview
+
+| Step | Route | What it does |
+|------|--------|----------------|
+| **Splash** | `/` | Full-viewport intro (birds, background, audio). **Enter** fades out and navigates to **`/home`**. |
+| **Home hub** | `/home` | Centered hero (“Chautari”), “A Place to Rest and Express”, privacy note, and **Sit under Chautari** — opens a modal before the room. |
+| **Chautari room** | `/chautari` | Shared kite field with realtime **Supabase** when configured; floating kites, hover cards, hugs, optional chat overlay, **CrisisBar** at bottom. |
+| **Come sit with yourself** | `/come-sit-with-yourself` | Voice or typed reflection → transcription (browser speech or **OpenAI Whisper** fallback) → classification into themed buckets → short video → suggestions via **Google Gemini** with **OpenAI** fallback. |
+| **Screening** | `/screening` | Questionnaire-style flow with results (`/screening/result`). |
+| **Break the chain** | `/break-the-chain` | Interactive chain metaphor with result view. |
+| **Research** | `/research` | Stub / placeholder for deeper reading links. |
+| **Auth** | API routes | Register / login (bcrypt + Supabase where configured). |
+
+### Home → Chautari: anonymous name
+
+- Tapping **Sit under Chautari** opens **`EnterChautariModal`**: a single field for an **anonymous display name** (stays on this device; not your real name).
+- On confirm, the name is stored in **`sessionStorage`** as **`chautari_uname`**, then the app navigates to **`/chautari`**.
+- If someone opens **`/chautari`** directly without a stored name, the room still assigns one via **`generateAnonName()`** (see `src/lib/anonName.ts`).
+
+### Global branding (inner pages)
+
+- **`SiteLogo`** (root layout): fixed top-left logo using **`/images/Logo.png`**, linking to **`/home`**.
+- Shown on all routes **except** **`/`** and **`/home`** so the splash and home hub stay uncluttered.
+
+### Chautari room UI
+
+- **No duplicate “Chautari” title** beside the logo — room branding is the global logo only.
+- **Floating kites** (`FloatingKite`, `KiteSVG`, physics from `kitePhysics`), **`KiteHoverCard`** on hover, **`HugOverlay`**, **`AnonymousChat`** where enabled.
+- Session: **`chautari_uid`** and **`chautari_uname`** in **`sessionStorage`** for this browser tab.
+
+---
+
+## Features (legacy table)
 
 | Area | What it does |
 |------|----------------|
-| **Home (`/`)** | Entry hub with links to main experiences. |
+| **Home (`/home`)** | Primary hub after splash; links into Chautari via modal + CTA. |
 | **Chautari (`/chautari`)** | Real-time shared “kites” over **Supabase** (presence, reactions, crisis resources bar). |
-| **Come sit with yourself (`/come-sit-with-yourself`)** | Voice or typed reflection → transcription (browser speech or **OpenAI Whisper** fallback) → classification into themed buckets → short video → suggestions via **Google Gemini** with **OpenAI** fallback. |
+| **Come sit with yourself (`/come-sit-with-yourself`)** | Voice or typed reflection → transcription → classification → video → suggestions (**Gemini** primary, **OpenAI** fallback). |
 | **Screening (`/screening`)** | Questionnaire-style flow with results. |
 | **Break the chain (`/break-the-chain`)** | Interactive chain metaphor with result view. |
 | **Research (`/research`)** | Stub / placeholder for deeper reading links. |
 | **Auth** | Register / login API routes (bcrypt + Supabase where configured). |
-
-`/home` redirects to `/` so the landing experience stays at the root.
 
 ---
 
@@ -48,7 +78,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) — you’ll land on the **splash** (`/`); after **Enter**, you’ll be sent to **`/home`**.
 
 ### Scripts
 
@@ -124,11 +154,16 @@ The repo includes a **`vercel.json`** with default Next.js-oriented commands. Ty
 ## Project layout (high level)
 
 ```
+public/
+  images/
+    Background.jpeg    # Splash + home atmosphere
+    Logo.png             # Site logo (SiteLogo)
 src/
-  app/                 # App Router pages + API routes
-  components/          # Shared UI (e.g. Chautari, Come sit flow)
-  data/                # Static config (e.g. come-sit buckets, media)
-  lib/                 # Supabase clients, rate limit, LLM helpers
+  app/                   # App Router pages + API routes
+  components/            # Shared UI — e.g. EnterChautariModal, SiteLogo, FloatingKite,
+                         # KiteHoverCard, CrisisBar, Come sit flow, overlays
+  data/                  # Static config (e.g. seed kites, come-sit buckets, media)
+  lib/                   # Supabase clients, rate limit, LLM helpers, kite physics, anon names
 ```
 
 ---
@@ -137,7 +172,7 @@ src/
 
 - Treat user-submitted text and audio as sensitive; log minimally in production.
 - Crisis UI in Chautari points users toward help; keep national/regional numbers accurate if you customize copy.
-- Review **OpenAI** and **Google** data policies before enabling keys in production.
+- Anonymous names for Chautari are stored in **`sessionStorage`** only for the current session context; review **OpenAI** and **Google** data policies before enabling keys in production.
 
 ---
 
